@@ -6,71 +6,53 @@
 <title>Peqi'in Cave Model</title>
 <style>
   :root {
-    --bg: #1b1a17;
-    --panel: #211f1a;
-    --accent: #b98a4a;
-    --accent2: #6f8f5f;
-    --text: #ece7dc;
-    --muted: #9c9587;
-    --border: #38362d;
+    --bg: #1b1a17; --panel: #211f1a; --accent: #b98a4a; --accent2: #6f8f5f;
+    --text: #ece7dc; --muted: #9c9587; --border: #38362d;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
   }
-  .site-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 20px;
-    background: rgba(244,242,238,0.93);
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: rgba(244,242,238,0.93); flex-shrink: 0; flex-wrap: wrap; gap: 12px; }
   .site-header .brand { font-weight: 700; color: #2b2a26; font-size: 14px; }
   .site-nav { display: flex; gap: 6px; }
-  .nav-btn {
-    font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
-    text-decoration: none; color: #3a362c; padding: 7px 13px;
-    border-radius: 16px; white-space: nowrap;
-  }
+  .nav-btn { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-decoration: none; color: #3a362c; padding: 7px 13px; border-radius: 16px; white-space: nowrap; }
   .nav-btn:hover { background: rgba(0,0,0,0.07); }
   .nav-btn.active { background: var(--accent2); color: #fff; }
 
-  #topbar {
-    padding: 8px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; flex-shrink: 0;
-  }
-  #controls { display: flex; gap: 16px; align-items: center; font-size: 12.5px; color: var(--muted); }
-  #controls label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  #topbar { padding: 8px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+  #controls { display: flex; gap: 14px; align-items: center; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  #controls label { display: flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; }
   #controls input[type=checkbox] { accent-color: var(--accent); }
-  #statusNote { font-size: 12px; color: var(--muted); }
+  .ctrl-divider { width: 1px; height: 16px; background: var(--border); }
+  #viewToggle { display: flex; gap: 4px; }
+  .view-btn { font-size: 11.5px; padding: 5px 12px; border-radius: 12px; border: 1px solid var(--border); background: #26241f; color: var(--muted); cursor: pointer; }
+  .view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #statusNote { font-size: 11.5px; color: var(--muted); }
 
   #main { flex: 1; display: flex; min-height: 0; }
-  #stage { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 10px; background: #14130f; }
+  #stage { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 10px; background: #efece4; }
   #stage svg { max-width: 100%; height: auto; }
+  #tableView { flex: 1; overflow: auto; padding: 20px; display: none; }
+  #tableView.visible { display: block; }
+  #stage.hidden-view { display: none; }
 
   #sidebar { width: 340px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--panel); padding: 18px; overflow-y: auto; }
   #sidebar h2 { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
   .type-tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 8px; margin-bottom: 12px; }
-  .type-area { background: rgba(111,143,95,0.2); color: var(--accent2); border: 1px solid var(--accent2); }
-  .type-square { background: rgba(91,157,217,0.2); color: #5b9dd9; border: 1px solid #5b9dd9; }
+  .type-area { background: rgba(185,138,74,0.2); color: var(--accent); border: 1px solid var(--accent); }
+  .type-square { background: rgba(185,138,74,0.2); color: var(--accent); border: 1px solid var(--accent); }
   .type-locus { background: rgba(185,138,74,0.2); color: var(--accent); border: 1px solid var(--accent); }
-
+  .type-find { background: rgba(91,157,217,0.2); color: #5b9dd9; border: 1px solid #5b9dd9; }
   .field { margin-bottom: 12px; }
   .field-label { font-size: 10.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
   .field-value { font-size: 13px; line-height: 1.5; }
   .empty-state { color: var(--muted); font-size: 13px; line-height: 1.6; margin-top: 30px; }
-
-  .find-card { background: #26241f; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .find-card { background: #26241f; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+  .find-card:hover { border-color: var(--accent); }
   .find-title { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
   .find-meta { font-size: 11px; color: var(--muted); }
   .certainty-tag { display: inline-block; font-size: 9.5px; font-weight: 600; padding: 1px 7px; border-radius: 8px; border: 1px solid; margin-top: 5px; }
@@ -78,13 +60,28 @@
   .certainty-inferred { color: #e0c15c; border-color: #e0c15c; }
   .certainty-ai_extracted { color: #7fa8d9; border-color: #7fa8d9; }
 
-  .pq-area-shape { fill: rgba(111,143,95,0.10); stroke: var(--accent2); stroke-width: 3; cursor: pointer; transition: fill 0.15s; }
-  .pq-area-shape:hover { fill: rgba(111,143,95,0.28); }
-  .pq-square-shape { fill: rgba(91,157,217,0.10); stroke: #5b9dd9; stroke-width: 1; cursor: pointer; transition: fill 0.15s; }
-  .pq-square-shape:hover { fill: rgba(91,157,217,0.35); }
-  .pq-locus-shape { stroke: var(--accent); stroke-width: 2; cursor: pointer; transition: fill 0.15s; }
+  /* Unified color scheme across all layers -- accent color family, low opacity */
+  .pq-area-shape { fill: rgba(185,138,74,0.06); stroke: var(--accent); stroke-width: 3; cursor: pointer; transition: fill 0.15s; }
+  .pq-area-shape:hover { fill: rgba(185,138,74,0.18); }
+  .pq-square-shape { fill: rgba(185,138,74,0.05); stroke: var(--accent); stroke-width: 0.75; stroke-opacity: 0.5; cursor: pointer; transition: fill 0.15s; }
+  .pq-square-shape:hover { fill: rgba(185,138,74,0.22); }
+  .pq-locus-shape { stroke: var(--accent); stroke-width: 1.5; stroke-opacity: 0.8; cursor: pointer; transition: fill 0.15s; }
   .pq-selected { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 10px #fff); }
   .layer-hidden { display: none !important; }
+
+  .find-icon { cursor: pointer; }
+  .find-icon circle { stroke: #1b1a17; stroke-width: 0.6; }
+  .find-icon:hover circle { stroke: #fff; stroke-width: 1.2; }
+  .find-icon text { font-size: 7px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+
+  /* Table view */
+  #tableView table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  #tableView th { text-align: left; padding: 8px 10px; background: var(--panel); border-bottom: 2px solid var(--border); color: var(--accent); cursor: pointer; white-space: nowrap; }
+  #tableView td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  #tableView tr:hover td { background: rgba(185,138,74,0.08); }
+  #tableFilters { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  #tableFilters select, #tableFilters input { background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 12.5px; }
+  #tableCount { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -100,9 +97,26 @@
 
 <div id="topbar">
   <div id="controls">
+    <div id="viewToggle">
+      <button class="view-btn active" id="mapViewBtn">Map</button>
+      <button class="view-btn" id="tableViewBtn">Table</button>
+    </div>
+    <div class="ctrl-divider"></div>
     <label><input type="checkbox" id="toggleAreas" checked> Areas</label>
     <label><input type="checkbox" id="toggleSquares" checked> Squares</label>
     <label><input type="checkbox" id="toggleLoci" checked> Loci</label>
+    <div class="ctrl-divider"></div>
+    <label><input type="checkbox" class="material-filter" value="flint" checked> Flint</label>
+    <label><input type="checkbox" class="material-filter" value="ossuary" checked> Ossuary</label>
+    <label><input type="checkbox" class="material-filter" value="chalice" checked> Chalice</label>
+    <label><input type="checkbox" class="material-filter" value="pottery" checked> Pottery</label>
+    <label><input type="checkbox" class="material-filter" value="basalt" checked> Basalt</label>
+    <label><input type="checkbox" class="material-filter" value="bead" checked> Bead</label>
+    <label><input type="checkbox" class="material-filter" value="shell_bead" checked> Shell bead</label>
+    <label><input type="checkbox" class="material-filter" value="bone_ivory" checked> Bone/Ivory</label>
+    <label><input type="checkbox" class="material-filter" value="copper" checked> Copper</label>
+    <label><input type="checkbox" class="material-filter" value="fauna" checked> Fauna</label>
+    <label><input type="checkbox" class="material-filter" value="misc" checked> Misc</label>
   </div>
   <div id="statusNote">Loading live data&hellip;</div>
 </div>
@@ -499,9 +513,29 @@
     </g>
 </svg>
   </div>
+  <div id="tableView">
+    <div id="tableFilters">
+      <select id="tableMaterialFilter"><option value="">All material types</option></select>
+      <select id="tableAreaFilter"><option value="">All areas</option></select>
+      <input type="text" id="tableSearch" placeholder="Search description, reg. no...">
+    </div>
+    <div id="tableCount"></div>
+    <table id="findsTable">
+      <thead><tr>
+        <th data-col="material_type">Material</th>
+        <th data-col="subtype">Subtype</th>
+        <th data-col="reg_no">Reg. No.</th>
+        <th data-col="locus">Locus</th>
+        <th data-col="area">Area</th>
+        <th data-col="description">Description</th>
+        <th data-col="certainty">Certainty</th>
+      </tr></thead>
+      <tbody id="findsTableBody"></tbody>
+    </table>
+  </div>
   <div id="sidebar">
     <div id="panelContent">
-      <div class="empty-state">Click any area, square, or locus on the map to see its real data here.</div>
+      <div class="empty-state">Click any area, square, locus, or find icon on the map to see its details here.</div>
     </div>
   </div>
 </div>
@@ -509,12 +543,24 @@
 <script>
 const SUPABASE_URL = "https://rfnitnycawesmllqkjjj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmbml0bnljYXdlc21sbHFrampqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTg2NTgsImV4cCI6MjEwMTA5NDY1OH0.y7zamAxSANWVbBbWJ5va3faxMag8zL9AM5E3YV9EkDM";
-const headers = {
-  apikey: SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-};
-
+const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 const svgRoot = document.querySelector('#stage svg');
+const svgNS = 'http://www.w3.org/2000/svg';
+
+// Material type -> { color, emoji } -- used for both map icons and table
+const MATERIAL_STYLE = {
+  flint:       { color: '#8a8a8a', emoji: '\ud83d\udd2a' },
+  ossuary:     { color: '#c98b4a', emoji: '\u26b1\ufe0f' },
+  chalice:     { color: '#b95d8a', emoji: '\ud83c\udff7' },
+  pottery:     { color: '#c9432f', emoji: '\ud83c\udffa' },
+  basalt:      { color: '#4a4a4a', emoji: '\ud83e\udea8' },
+  bead:        { color: '#d9c34a', emoji: '\ud83d\udcff' },
+  shell_bead:  { color: '#7fd6c9', emoji: '\ud83d\udc1a' },
+  bone_ivory:  { color: '#e8e2d0', emoji: '\ud83e\uddb4' },
+  copper:      { color: '#b5651d', emoji: '\ud83d\udd29' },
+  fauna:       { color: '#7fae6f', emoji: '\ud83d\udc3e' },
+  misc:        { color: '#9c9587', emoji: '\u2753' }
+};
 
 function classify(id) {
   if (!id) return null;
@@ -524,13 +570,14 @@ function classify(id) {
   return null;
 }
 function locusIdFromSvgId(svgId) {
-  // 'Pq_cave_L_109' -> 'L109'
   const m = svgId.match(/^Pq_cave_L_(\d+[NSWE]?)$/);
   return m ? 'L' + m[1] : null;
 }
 
-let lociData = {};   // locus_id -> { area_id, phase, description, source_page, boundary_certainty }
-let findsData = {};  // locus_id -> [ finds... ]
+let lociData = {};
+let findsData = {};   // locus_id -> [ finds ]
+let allFinds = [];      // flat list, each find annotated with its locus_id(s)
+let activeMaterials = new Set(Object.keys(MATERIAL_STYLE));
 
 async function loadData() {
   try {
@@ -542,33 +589,89 @@ async function loadData() {
     const fl = await flRes.json();
     fl.forEach(row => {
       if (!findsData[row.locus_id]) findsData[row.locus_id] = [];
-      if (row.finds) findsData[row.locus_id].push(row.finds);
+      if (row.finds) {
+        findsData[row.locus_id].push(row.finds);
+        allFinds.push({ ...row.finds, locus_id: row.locus_id, area_id: (lociData[row.locus_id]||{}).area_id });
+      }
     });
 
     document.getElementById('statusNote').textContent =
-      `${loci.length} loci loaded · ${Object.values(findsData).reduce((a,b)=>a+b.length,0)} find-locus links`;
+      `${loci.length} loci \u00b7 ${allFinds.length} find-locus links loaded`;
 
-    applyFindsHeatmap();
+    renderFindIcons();
+    populateTableFilters();
+    renderTable();
   } catch (err) {
-    document.getElementById('statusNote').textContent = 'Could not load live data (check connection).';
+    document.getElementById('statusNote').textContent = 'Could not load live data.';
     console.error(err);
   }
 }
 
-function applyFindsHeatmap() {
-  svgRoot.querySelectorAll('[id^="Pq_cave_L_"]').forEach(el => {
-    const locusId = locusIdFromSvgId(el.id);
-    const count = (findsData[locusId] || []).length;
-    let color;
-    if (count === 0) color = 'rgba(150,150,150,0.15)';
-    else if (count <= 2) color = 'rgba(245,230,160,0.55)';
-    else if (count <= 5) color = 'rgba(217,130,47,0.55)';
-    else color = 'rgba(143,35,24,0.6)';
-    el.style.fill = color;
-    el.querySelectorAll('path,rect').forEach(child => child.style.fill = color);
+// ---- Auto-distributed find icons within each locus shape (jittered, clipped, computed at render time -- never stored) ----
+function renderFindIcons() {
+  let defs = svgRoot.querySelector('defs');
+  if (!defs) { defs = document.createElementNS(svgNS, 'defs'); svgRoot.insertBefore(defs, svgRoot.firstChild); }
+
+  Object.keys(findsData).forEach(locusId => {
+    const svgId = 'Pq_cave_L_' + locusId.replace(/^L/, '');
+    const locusEl = document.getElementById(svgId);
+    if (!locusEl) return;
+    const finds = findsData[locusId].filter(f => activeMaterials.has(f.material_type));
+    if (!finds.length) return;
+
+    // Build a clip path from the locus's own shape(s), so icons never render outside its true boundary
+    const clipId = 'clip_' + svgId;
+    let clipPath = defs.querySelector('#' + clipId);
+    if (!clipPath) {
+      clipPath = document.createElementNS(svgNS, 'clipPath');
+      clipPath.setAttribute('id', clipId);
+      locusEl.querySelectorAll('path, rect').forEach(shape => clipPath.appendChild(shape.cloneNode(true)));
+      defs.appendChild(clipPath);
+    }
+
+    const bbox = locusEl.getBBox();
+    const iconGroupId = 'icons_' + svgId;
+    let existing = document.getElementById(iconGroupId);
+    if (existing) existing.remove();
+
+    const iconGroup = document.createElementNS(svgNS, 'g');
+    iconGroup.setAttribute('id', iconGroupId);
+    iconGroup.setAttribute('clip-path', `url(#${clipId})`);
+
+    const spacing = 9;
+    const cols = Math.max(1, Math.floor(bbox.width / spacing));
+    finds.forEach((f, i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      const cx = bbox.x + spacing * (col + 0.5) + (row % 2 === 1 ? spacing/2 : 0);
+      const cy = bbox.y + spacing * (row + 0.5);
+      const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
+
+      const iconEl = document.createElementNS(svgNS, 'g');
+      iconEl.setAttribute('class', 'find-icon');
+      iconEl.setAttribute('data-find-id', f.find_id);
+      const circle = document.createElementNS(svgNS, 'circle');
+      circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', 3.4);
+      circle.setAttribute('fill', style.color);
+      const title = document.createElementNS(svgNS, 'title');
+      title.textContent = `${f.material_type}${f.subtype ? ' (' + f.subtype + ')' : ''} \u2014 Reg. ${f.reg_no || '?'}`;
+      iconEl.appendChild(circle);
+      iconEl.appendChild(title);
+      iconEl.addEventListener('click', (e) => { e.stopPropagation(); selectFind(f); });
+      iconGroup.appendChild(iconEl);
+    });
+
+    locusEl.parentNode.insertBefore(iconGroup, locusEl.nextSibling);
   });
 }
 
+document.querySelectorAll('.material-filter').forEach(cb => {
+  cb.addEventListener('change', () => {
+    activeMaterials = new Set(Array.from(document.querySelectorAll('.material-filter:checked')).map(c => c.value));
+    renderFindIcons();
+  });
+});
+
+// ---- Click handling (areas/squares/loci) ----
 const allShapes = svgRoot.querySelectorAll('path, rect, g');
 allShapes.forEach(el => {
   const kind = classify(el.id);
@@ -596,7 +699,6 @@ function selectElement(el, kind) {
   if (currentSelected) currentSelected.classList.remove('pq-selected');
   el.classList.add('pq-selected');
   currentSelected = el;
-
   const id = el.id;
   const typeLabel = kind.charAt(0).toUpperCase() + kind.slice(1);
   let html = `<span class="type-tag type-${kind}">${typeLabel}</span>`;
@@ -609,31 +711,34 @@ function selectElement(el, kind) {
     if (locus) {
       html += `<div class="field"><div class="field-label">Area</div><div class="field-value">${escapeHtml(locus.area_id)}</div></div>`;
       html += `<div class="field"><div class="field-label">Phase</div><div class="field-value">${escapeHtml(locus.phase || 'not stated')}</div></div>`;
-      if (locus.boundary_certainty === 'approximate') {
-        html += `<div class="field"><div class="field-value" style="color:#e0c15c;">⚠ Approximate boundary (not precisely stated in the source)</div></div>`;
-      }
+      if (locus.boundary_certainty === 'approximate') html += `<div class="field"><div class="field-value" style="color:#e0c15c;">\u26a0 Approximate boundary</div></div>`;
       if (locus.description) html += `<div class="field"><div class="field-label">Description</div><div class="field-value">${escapeHtml(locus.description)}</div></div>`;
-    } else {
-      html += `<div class="field"><div class="field-value" style="color:var(--muted);">No database record yet for ${locusId} &mdash; add it in Supabase's loci table.</div></div>`;
     }
     html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
-    if (finds.length) {
-      finds.forEach(f => {
-        html += `<div class="find-card">
-          <div class="find-title">${escapeHtml(f.material_type)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
-          <div class="find-meta">Reg. ${escapeHtml(f.reg_no || '?')} ${f.fig_no ? '&middot; Fig. ' + escapeHtml(f.fig_no) : ''}</div>
-          ${f.description ? `<div class="find-meta" style="margin-top:4px;">${escapeHtml(f.description)}</div>` : ''}
-          <span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>
-        </div>`;
-      });
-    } else {
-      html += `<div class="field-value" style="color:var(--muted); font-size:12px;">No finds recorded here yet.</div>`;
-    }
+    finds.forEach(f => {
+      const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
+      html += `<div class="find-card" onclick="selectFind(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+        <div class="find-title">${style.emoji} ${escapeHtml(f.material_type)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
+        <div class="find-meta">Reg. ${escapeHtml(f.reg_no || '?')}</div>
+        <span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>
+      </div>`;
+    });
+    if (!finds.length) html += `<div class="field-value" style="color:var(--muted); font-size:12px;">No finds recorded here yet.</div>`;
   } else {
-    html += `<h2>${escapeHtml(id)}</h2>`;
-    html += `<div class="field"><div class="field-value" style="color:var(--muted);">Click a locus (not just the area/square outline) to see linked finds.</div></div>`;
+    html += `<h2>${escapeHtml(id)}</h2><div class="field-value" style="color:var(--muted);">Click a locus to see linked finds.</div>`;
   }
+  document.getElementById('panelContent').innerHTML = html;
+}
 
+function selectFind(f) {
+  const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
+  let html = `<span class="type-tag type-find">Find</span><h2>${style.emoji} ${escapeHtml(f.material_type)}</h2>`;
+  html += `<div class="field"><div class="field-label">Subtype</div><div class="field-value">${escapeHtml(f.subtype || 'not stated')}</div></div>`;
+  html += `<div class="field"><div class="field-label">Registration No.</div><div class="field-value">${escapeHtml(f.reg_no || 'not stated')}</div></div>`;
+  html += `<div class="field"><div class="field-label">Figure No.</div><div class="field-value">${escapeHtml(f.fig_no || 'not stated')}</div></div>`;
+  html += `<div class="field"><div class="field-label">Baskets</div><div class="field-value">${escapeHtml(f.baskets || 'not stated')}</div></div>`;
+  if (f.description) html += `<div class="field"><div class="field-label">Description</div><div class="field-value">${escapeHtml(f.description)}</div></div>`;
+  html += `<span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>`;
   document.getElementById('panelContent').innerHTML = html;
 }
 
@@ -643,6 +748,82 @@ function setLayerVisibility(className, visible) {
 document.getElementById('toggleAreas').addEventListener('change', (e) => setLayerVisibility('pq-area-shape', e.target.checked));
 document.getElementById('toggleSquares').addEventListener('change', (e) => setLayerVisibility('pq-square-shape', e.target.checked));
 document.getElementById('toggleLoci').addEventListener('change', (e) => setLayerVisibility('pq-locus-shape', e.target.checked));
+
+// ---- View toggle: Map vs Table ----
+document.getElementById('mapViewBtn').addEventListener('click', () => {
+  document.getElementById('mapViewBtn').classList.add('active');
+  document.getElementById('tableViewBtn').classList.remove('active');
+  document.getElementById('stage').classList.remove('hidden-view');
+  document.getElementById('tableView').classList.remove('visible');
+});
+document.getElementById('tableViewBtn').addEventListener('click', () => {
+  document.getElementById('tableViewBtn').classList.add('active');
+  document.getElementById('mapViewBtn').classList.remove('active');
+  document.getElementById('stage').classList.add('hidden-view');
+  document.getElementById('tableView').classList.add('visible');
+});
+
+// ---- Table view: filterable/sortable list of all finds ----
+function populateTableFilters() {
+  const matSel = document.getElementById('tableMaterialFilter');
+  Object.keys(MATERIAL_STYLE).forEach(m => {
+    const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
+    matSel.appendChild(opt);
+  });
+  const areaSel = document.getElementById('tableAreaFilter');
+  [...new Set(allFinds.map(f => f.area_id))].sort().forEach(a => {
+    const opt = document.createElement('option'); opt.value = a; opt.textContent = 'Area ' + a;
+    areaSel.appendChild(opt);
+  });
+  matSel.addEventListener('change', renderTable);
+  areaSel.addEventListener('change', renderTable);
+  document.getElementById('tableSearch').addEventListener('input', renderTable);
+  document.querySelectorAll('#tableView th').forEach(th => th.addEventListener('click', () => sortTable(th.dataset.col)));
+}
+
+let sortCol = null, sortAsc = true;
+function sortTable(col) {
+  if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+  renderTable();
+}
+
+function renderTable() {
+  const mat = document.getElementById('tableMaterialFilter').value;
+  const area = document.getElementById('tableAreaFilter').value;
+  const search = document.getElementById('tableSearch').value.toLowerCase();
+
+  let rows = allFinds.filter(f => {
+    if (mat && f.material_type !== mat) return false;
+    if (area && f.area_id !== area) return false;
+    if (search) {
+      const hay = `${f.description||''} ${f.reg_no||''} ${f.subtype||''}`.toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (sortCol) {
+    rows = [...rows].sort((a,b) => {
+      const av = (sortCol==='locus' ? a.locus_id : sortCol==='area' ? a.area_id : a[sortCol]) || '';
+      const bv = (sortCol==='locus' ? b.locus_id : sortCol==='area' ? b.area_id : b[sortCol]) || '';
+      return sortAsc ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    });
+  }
+
+  document.getElementById('tableCount').textContent = `${rows.length} find${rows.length===1?'':'s'} shown`;
+  document.getElementById('findsTableBody').innerHTML = rows.map(f => {
+    const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
+    return `<tr onclick='selectFind(${JSON.stringify(f).replace(/'/g,"&#39;")})'>
+      <td>${style.emoji} ${escapeHtml(f.material_type)}</td>
+      <td>${escapeHtml(f.subtype||'')}</td>
+      <td>${escapeHtml(f.reg_no||'')}</td>
+      <td>${escapeHtml(f.locus_id)}</td>
+      <td>${escapeHtml(f.area_id)}</td>
+      <td>${escapeHtml((f.description||'').slice(0,80))}${(f.description||'').length>80?'&hellip;':''}</td>
+      <td><span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span></td>
+    </tr>`;
+  }).join('');
+}
 
 loadData();
 </script>
