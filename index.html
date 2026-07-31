@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peqi'in Cave &mdash; Chalcolithic Burial Site Database</title>
+<style>
+  :root {
+    --bg: #1b1a17;
+    --panel: #211f1a;
+    --accent: #b98a4a;
+    --accent2: #6f8f5f;
+    --text: #ece7dc;
+    --muted: #9c9587;
+    --border: #38362d;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: rgba(244,242,238,0.93);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .site-header .brand { font-weight: 700; color: #2b2a26; font-size: 14px; }
+  .site-nav { display: flex; gap: 6px; }
+  .nav-btn {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    text-decoration: none; color: #3a362c; padding: 7px 13px;
+    border-radius: 16px; white-space: nowrap;
+  }
+  .nav-btn:hover { background: rgba(0,0,0,0.07); }
+  .nav-btn.active { background: var(--accent2); color: #fff; }
+
+  .hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+  .hero h1 { font-size: clamp(26px, 4vw, 40px); margin: 0 0 6px; }
+  .hero p.subtitle { font-size: 15px; color: var(--muted); margin: 0 0 32px; max-width: 560px; }
+
+  .about-card {
+    max-width: 680px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    text-align: left;
+    line-height: 1.65;
+    font-size: 14.5px;
+    margin-bottom: 30px;
+  }
+  .about-card p { margin: 0 0 14px; }
+  .about-card p:last-child { margin-bottom: 0; }
+  .about-card h2 { font-size: 16px; color: var(--accent); margin: 0 0 14px; }
+
+  .cta-row { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; max-width: 500px; }
+  .cta-card {
+    flex: 1 1 180px; max-width: 220px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 22px 18px; text-decoration: none; color: var(--text);
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .cta-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .cta-card .icon { font-size: 26px; margin-bottom: 10px; display: block; }
+  .cta-card .label { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+  .cta-card .desc { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+  footer { text-align: center; font-size: 11px; color: var(--muted); padding: 16px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="brand">Peqi'in Cave &mdash; Chalcolithic Burial Site</div>
+  <nav class="site-nav">
+    <a href="index.html" class="nav-btn active">HOME</a>
+    <a href="cave_model.html" class="nav-btn">CAVE MODEL</a>
+    <a href="add_find.html" class="nav-btn">ADD FIND</a>
+  </nav>
+</div>
+
+<div class="hero">
+  <h1>Peqi'in Cave</h1>
+  <p class="subtitle">A digital spatial database of a Late Chalcolithic burial site, Upper Galilee, Israel</p>
+
+  <div class="about-card">
+    <h2>About this project</h2>
+    <p>This is an interactive digital map of Peqi'in Cave, a major Late Chalcolithic burial site excavated in the Upper Galilee. Every area, excavation square, and stratigraphic locus in the cave is digitized as a clickable region, linked directly to the artifacts recorded there &mdash; ossuaries, flint tools, pottery, beads, and more.</p>
+    <p>The goal is to make it possible to actually ask spatial questions of the excavation data: does a given artifact type cluster in particular areas or loci of the cave? Do certain find types consistently co-occur in the same contexts? The underlying database is structured specifically to support that kind of analysis, not just to catalog objects.</p>
+    <p>Built as a final assignment for a course on Chalcolithic burial sites, based on the excavation monograph <em>Peqi'in: A Late Chalcolithic Burial Site, Upper Galilee, Israel</em> (Shalem, Gal &amp; Smithline).</p>
+  </div>
+
+  <div class="cta-row">
+    <a href="cave_model.html" class="cta-card">
+      <span class="icon">&#127958;&#65039;</span>
+      <div class="label">Cave Model</div>
+      <div class="desc">Explore the interactive spatial map: areas, squares, loci, and finds</div>
+    </a>
+    <a href="add_find.html" class="cta-card">
+      <span class="icon">&#128269;</span>
+      <div class="label">Add Find</div>
+      <div class="desc">Record a new artifact and link it to its locus/loci</div>
+    </a>
+  </div>
+</div>
+
+<footer>Peqi'in Cave Database &middot; Built with the assistance of Claude (Anthropic)</footer>
+</body>
+</html>
