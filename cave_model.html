@@ -901,6 +901,8 @@ async function loadData() {
     document.getElementById('statusNote').textContent =
       `${loci.length} loci \u00b7 ${allFinds.length} find-locus links loaded`;
 
+    populateLocationSubPills();
+    applyAreaColors();
     renderFindIcons();
     updateMaterialResultNote();
     populateTableFilters();
@@ -921,7 +923,8 @@ function renderFindIcons() {
     const locusEl = document.getElementById(svgId);
     if (!locusEl) return;
     const locusArea = (lociData[locusId] || {}).area_id;
-    const finds = findsData[locusId].filter(f => activeMaterials.has(f.material_type) && (!locusArea || activeAreas.has(locusArea)));
+    const inLociScope = activeLoci.size === 0 || activeLoci.has(locusId);
+    const finds = findsData[locusId].filter(f => activeMaterials.has(f.material_type) && (!locusArea || activeAreas.has(locusArea)) && inLociScope);
     if (!finds.length) return;
 
     // Build a clip path from the locus's own shape(s), so icons never render outside its true boundary
@@ -1094,17 +1097,9 @@ const LAYER_CLASS_MAP = { area: 'pq-area-shape', loci: 'pq-locus-shape', section
 document.querySelectorAll('.location-pill').forEach(pill => {
   pill.addEventListener('click', () => {
     pill.classList.toggle('active');
-    const layer = pill.dataset.layer;
-    setLayerVisibility(LAYER_CLASS_MAP[layer], pill.classList.contains('active'));
-    if (layer === 'area') {
-      document.getElementById('areaSubfilter').classList.toggle('visible', pill.classList.contains('active'));
-    }
+    setLayerVisibility(LAYER_CLASS_MAP[pill.dataset.layer], pill.classList.contains('active'));
   });
 });
-
-// ---- Area sub-filter: which specific area(s) to scope the map to ----
-// (multiple can be active at once -- e.g. Area I + Area III both shown)
-let activeAreas = new Set(['I', 'II', 'III', 'VII']);
 
 function areaOfElement(el) {
   const id = el.id || '';
@@ -1113,6 +1108,10 @@ function areaOfElement(el) {
   const locusId = locusIdFromSvgId(id);
   if (locusId && lociData[locusId]) return lociData[locusId].area_id;
   return null;
+}
+function squareKeyOfElement(el) {
+  const m = (el.id || '').match(/^Pq_cave_area_([IVX]+)_([A-Z])$/);
+  return m ? `${m[1]}|${m[2]}` : null;
 }
 
 // Distinct brown shade per area, so both the area outline and every square
@@ -1126,35 +1125,70 @@ const AREA_COLORS = {
 
 function applyAreaColors() {
   svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape').forEach(el => {
-    const area = areaOfElement(el);
-    const color = AREA_COLORS[area];
+    const color = AREA_COLORS[areaOfElement(el)];
     if (color) { el.style.fill = color; el.style.stroke = color; }
   });
 }
 
-function applyAreaSubfilter() {
+// ---- Three independent sub-filters: which specific area(s) / locus/loci / section(s) ----
+// ---- are in scope. Each defaults to "everything active" once real data loads.        ----
+let activeAreas = new Set(['I', 'II', 'III', 'VII']);
+let activeLoci = new Set();
+let activeSections = new Set();
+
+function populateLocationSubPills() {
+  const lociContainer = document.getElementById('lociSubPills');
+  const shapedLoci = Object.keys(lociData).filter(id => lociData[id].svg_element_id).sort();
+  activeLoci = new Set(shapedLoci);
+  lociContainer.innerHTML = shapedLoci.map(id =>
+    `<button type="button" class="sub-pill active" data-scope="loci" data-value="${id}">${id}</button>`
+  ).join('') || '<span class="subfilter-loading">No loci with map shapes yet.</span>';
+
+  const sectionContainer = document.getElementById('sectionSubPills');
+  activeSections = new Set(allSquares.map(sq => `${sq.area_id}|${sq.letter}`));
+  sectionContainer.innerHTML = allSquares.map(sq =>
+    `<button type="button" class="sub-pill active" data-scope="section" data-value="${sq.area_id}|${sq.letter}">${sq.area_id}-${sq.letter}</button>`
+  ).join('') || '<span class="subfilter-loading">No sections loaded yet.</span>';
+}
+
+function applyLocationSubfilters() {
   svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape, .pq-locus-shape').forEach(el => {
     const area = areaOfElement(el);
-    const hidden = area && !activeAreas.has(area);
+    let hidden = area && !activeAreas.has(area);
+    if (!hidden && el.classList.contains('pq-square-shape')) {
+      const key = squareKeyOfElement(el);
+      if (key && !activeSections.has(key)) hidden = true;
+    }
+    if (!hidden) {
+      const locusId = locusIdFromSvgId(el.id);
+      if (locusId && !activeLoci.has(locusId)) hidden = true;
+    }
     el.classList.toggle('area-scoped-hidden', !!hidden);
   });
   renderFindIcons();
   updateMaterialResultNote();
 }
 
-document.querySelectorAll('.area-sub-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    const area = pill.dataset.area;
-    if (activeAreas.has(area)) { activeAreas.delete(area); pill.classList.remove('active'); }
-    else { activeAreas.add(area); pill.classList.add('active'); }
-    applyAreaSubfilter();
-  });
-});
-
-document.getElementById('resetAreaSubBtn').addEventListener('click', () => {
-  activeAreas = new Set(['I', 'II', 'III', 'VII']);
-  document.querySelectorAll('.area-sub-pill').forEach(p => p.classList.add('active'));
-  applyAreaSubfilter();
+// Single delegated handler covers the static Area pills AND the dynamically-built Loci/Section pills
+document.getElementById('layersWrap').addEventListener('click', (e) => {
+  const pill = e.target.closest('.sub-pill');
+  if (pill) {
+    const scope = pill.dataset.scope, value = pill.dataset.value;
+    const targetSet = scope === 'area' ? activeAreas : scope === 'loci' ? activeLoci : activeSections;
+    if (targetSet.has(value)) { targetSet.delete(value); pill.classList.remove('active'); }
+    else { targetSet.add(value); pill.classList.add('active'); }
+    applyLocationSubfilters();
+    return;
+  }
+  const resetBtn = e.target.closest('.reset-btn');
+  if (resetBtn) {
+    const scope = resetBtn.dataset.reset;
+    if (scope === 'area') activeAreas = new Set(['I', 'II', 'III', 'VII']);
+    else if (scope === 'loci') activeLoci = new Set(Object.keys(lociData).filter(id => lociData[id].svg_element_id));
+    else if (scope === 'section') activeSections = new Set(allSquares.map(sq => `${sq.area_id}|${sq.letter}`));
+    document.querySelectorAll(`.sub-pill[data-scope="${scope}"]`).forEach(p => p.classList.add('active'));
+    applyLocationSubfilters();
+  }
 });
 
 // ---- View toggle: Map vs Table ----
