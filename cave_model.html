@@ -33,20 +33,20 @@
   .view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   #statusNote { font-size: 11.5px; color: var(--muted); }
 
-  #locationFilterBar {
-    padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  }
-  #locationFilterBar .label { font-size: 11px; color: var(--muted); letter-spacing: 0.03em; margin-right: 4px; }
+  #controls .label { font-size: 11px; color: var(--muted); letter-spacing: 0.03em; margin: 0 2px 0 4px; }
   #resetLocationBtn {
     font-size: 11px; padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted); cursor: pointer; margin-left: 6px;
+    background: transparent; color: var(--muted); cursor: pointer; flex-shrink: 0; align-self: flex-start;
   }
   #resetLocationBtn:hover { color: var(--text); }
   #locationSubfilterBar {
     padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-    max-height: 100px; overflow-y: auto;
+    max-height: 130px; overflow-y: auto;
+    display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
   }
+  /* Cap how many pills show before scrolling -- keeps the bar from growing
+     unbounded with 47 loci / 51 sections in the list */
+  .subfilter-pills { max-height: 110px; overflow-y: auto; align-content: flex-start; }
 
   /* Top-level location pills -- same visual language as the material-type pills below */
   .location-pills { display: flex; gap: 6px; margin-bottom: 4px; }
@@ -94,8 +94,8 @@
   }
 
   #main { flex: 1; display: flex; min-height: 0; }
-  #stage { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 10px; background: #efece4; }
-  #stage svg { max-width: 100%; height: auto; }
+  #stage { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 10px; background: #efece4; min-height: 0; }
+  #stage svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }
   #tableView { flex: 1; overflow: auto; padding: 20px; display: none; }
   #tableView.visible { display: block; }
   #stage.hidden-view { display: none; }
@@ -133,6 +133,11 @@
   .pq-locus-shape { fill: #8f8a80; fill-opacity: 0.35; stroke: #8f8a80; stroke-width: 1.5; stroke-opacity: 0.5; cursor: pointer; transition: opacity 0.15s; }
   .pq-locus-shape:hover { fill-opacity: 0.55; stroke-opacity: 0.8; }
   .pq-selected { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 10px #fff); }
+  /* Yellow glow for shapes matching an ACTIVE sub-filter selection (same
+     visual language as T.A.X.A.'s taphonomy filter glow) -- only applied
+     when the current scope's selection is a genuine subset, not the
+     trivial "everything selected" default. */
+  .pq-subfilter-glow { stroke: #ffd93d !important; stroke-width: 3px !important; filter: drop-shadow(0 0 4px #ffd93d) drop-shadow(0 0 8px #ffd93d); }
   .layer-hidden { display: none !important; }
   .area-scoped-hidden { display: none !important; }
 
@@ -168,17 +173,15 @@
       <button class="view-btn active" id="mapViewBtn">Map</button>
       <button class="view-btn" id="tableViewBtn">Table</button>
     </div>
+    <div class="ctrl-divider"></div>
+    <span class="label">FILTER BY LOCATION:</span>
+    <button class="location-pill active" data-scope="area">Area</button>
+    <button class="location-pill" data-scope="loci">Loci</button>
+    <button class="location-pill" data-scope="section">Section</button>
   </div>
   <div id="statusNote">Loading live data&hellip;</div>
 </div>
 
-<div id="locationFilterBar">
-  <span class="label">FILTER BY LOCATION:</span>
-  <button class="location-pill active" data-scope="area">Area</button>
-  <button class="location-pill" data-scope="loci">Loci</button>
-  <button class="location-pill" data-scope="section">Section</button>
-  <button id="resetLocationBtn">Reset</button>
-</div>
 <div id="locationSubfilterBar">
   <div class="subfilter-pills" id="areaSubPills">
     <button type="button" class="sub-pill active" data-scope="area" data-value="I">Area I</button>
@@ -192,6 +195,7 @@
   <div class="subfilter-pills" id="sectionSubPills" style="display:none;">
     <span class="subfilter-loading">Loading&hellip;</span>
   </div>
+  <button id="resetLocationBtn">Reset</button>
 </div>
 
 <div id="materialFilterBar">
@@ -1107,8 +1111,7 @@ function squareKeyOfElement(el) {
   return m ? `${m[1]}|${m[2]}` : null;
 }
 
-// Distinct brown shade per area, so both the area outline and every square
-// inside it are recognizably "the same area" by color alone.
+// Distinct brown shade per area outline.
 const AREA_COLORS = {
   I:   '#c99a5c',  // warm light brown
   II:  '#9c6b3a',  // mid brown
@@ -1116,9 +1119,23 @@ const AREA_COLORS = {
   VII: '#c47a4a'   // reddish brown (kept distinct from the other three)
 };
 
+// Sections get their own light pastel palette, one per parent area, deliberately
+// DIFFERENT from the area's own brown -- still tells you which area a section
+// belongs to at a glance, without sections and area outlines looking identical.
+const SECTION_COLORS = {
+  I:   '#e8b8c8',  // light pink
+  II:  '#c8b8e8',  // light purple
+  III: '#b8d8e8'   // light blue
+  // (Area VII has no grid squares, so no section color needed)
+};
+
 function applyAreaColors() {
-  svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape').forEach(el => {
+  svgRoot.querySelectorAll('.pq-area-shape').forEach(el => {
     const color = AREA_COLORS[areaOfElement(el)];
+    if (color) { el.style.fill = color; el.style.stroke = color; }
+  });
+  svgRoot.querySelectorAll('.pq-square-shape').forEach(el => {
+    const color = SECTION_COLORS[areaOfElement(el)];
     if (color) { el.style.fill = color; el.style.stroke = color; }
   });
 }
@@ -1146,20 +1163,36 @@ function populateLocationSubPills() {
   ).join('') || '<span class="subfilter-loading">No sections loaded yet.</span>';
 }
 
+function totalCountForScope(scope) {
+  if (scope === 'area') return 4;
+  if (scope === 'section') return allSquares.length;
+  if (scope === 'loci') return Object.keys(lociData).filter(id => lociData[id].svg_element_id).length;
+  return 0;
+}
+
 function applyLocationSubfilters() {
+  const activeSet = activeScope === 'area' ? activeAreas : activeScope === 'section' ? activeSections : activeLoci;
+  // Only glow when actively narrowed to a genuine subset -- not the trivial
+  // "everything selected" default, matching how T.A.X.A.'s filter glow worked.
+  const isNarrowed = activeSet.size > 0 && activeSet.size < totalCountForScope(activeScope);
+
   svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape, .pq-locus-shape').forEach(el => {
-    let hidden = false;
+    let hidden = false, matches = false;
     if (activeScope === 'area') {
       const area = areaOfElement(el);
-      hidden = area && !activeAreas.has(area);
+      matches = area && activeAreas.has(area);
+      hidden = area && !matches;
     } else if (activeScope === 'section') {
       const key = squareKeyOfElement(el);
-      hidden = key && !activeSections.has(key);
+      matches = key && activeSections.has(key);
+      hidden = key && !matches;
     } else if (activeScope === 'loci') {
       const locusId = locusIdFromSvgId(el.id);
-      hidden = locusId && !activeLoci.has(locusId);
+      matches = locusId && activeLoci.has(locusId);
+      hidden = locusId && !matches;
     }
     el.classList.toggle('area-scoped-hidden', !!hidden);
+    el.classList.toggle('pq-subfilter-glow', isNarrowed && matches && !hidden);
   });
   renderFindIcons();
   updateMaterialResultNote();
