@@ -33,6 +33,63 @@
   .view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   #statusNote { font-size: 11.5px; color: var(--muted); }
 
+  .layers-wrap { position: relative; display: inline-block; }
+  .layers-btn {
+    font-size: 12px; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border);
+    background: #26241f; color: var(--muted); cursor: pointer;
+  }
+  .layers-btn:hover { color: var(--text); }
+  .layers-box {
+    display: none; position: absolute; top: 32px; left: 0; z-index: 50;
+    background: #26241f; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;
+  }
+  .layers-wrap.open .layers-box { display: block; }
+  .layers-box label { display: block; font-size: 12.5px; color: var(--muted); margin: 6px 0; cursor: pointer; }
+  .layers-box input[type=checkbox] { accent-color: var(--accent); margin-right: 6px; }
+
+  .location-pills { display: flex; gap: 6px; }
+  .location-pill {
+    font-size: 12px; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border);
+    background: #1b1a17; color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .location-pill.active { border-color: var(--accent2); color: var(--text); background: rgba(111,143,95,0.18); }
+  .area-subfilter { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: none; }
+  .area-subfilter.visible { display: block; }
+  .area-subfilter-label { font-size: 10.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .area-subfilter-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+  .area-sub-pill {
+    font-size: 11.5px; padding: 5px 10px; border-radius: 12px; border: 1px solid var(--border);
+    background: #1b1a17; color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .area-sub-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
+  #resetAreaSubBtn {
+    font-size: 11px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer;
+  }
+  #resetAreaSubBtn:hover { color: var(--text); }
+
+  #materialFilterBar {
+    padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  #materialFilterBar .label { font-size: 11px; color: var(--muted); letter-spacing: 0.03em; margin-right: 4px; }
+  .material-pill {
+    font-size: 12px; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--border);
+    background: #26241f; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .material-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
+  .material-pill:hover { border-color: var(--accent); }
+  #clearMaterialBtn {
+    font-size: 12px; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; margin-left: 4px;
+  }
+  #clearMaterialBtn:hover { color: var(--text); }
+  #materialResultBar {
+    min-height: 26px; display: flex; align-items: center; padding: 4px 20px;
+    border-bottom: 1px solid var(--border); font-size: 12px; color: var(--accent); flex-shrink: 0;
+  }
+
   #main { flex: 1; display: flex; min-height: 0; }
   #stage { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 10px; background: #efece4; }
   #stage svg { max-width: 100%; height: auto; }
@@ -69,6 +126,7 @@
   .pq-locus-shape:hover { fill-opacity: 0.5; stroke-opacity: 0.6; }
   .pq-selected { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 10px #fff); }
   .layer-hidden { display: none !important; }
+  .area-scoped-hidden { display: none !important; }
 
   .find-icon { cursor: pointer; }
   .find-icon circle { stroke: #1b1a17; stroke-width: 0.6; }
@@ -103,24 +161,46 @@
       <button class="view-btn" id="tableViewBtn">Table</button>
     </div>
     <div class="ctrl-divider"></div>
-    <label><input type="checkbox" id="toggleAreas" checked> Areas</label>
-    <label><input type="checkbox" id="toggleSquares" checked> Squares</label>
-    <label><input type="checkbox" id="toggleLoci" checked> Loci</label>
-    <div class="ctrl-divider"></div>
-    <label><input type="checkbox" class="material-filter" value="flint" checked> Flint</label>
-    <label><input type="checkbox" class="material-filter" value="ossuary" checked> Ossuary</label>
-    <label><input type="checkbox" class="material-filter" value="chalice" checked> Chalice</label>
-    <label><input type="checkbox" class="material-filter" value="pottery" checked> Pottery</label>
-    <label><input type="checkbox" class="material-filter" value="basalt" checked> Basalt</label>
-    <label><input type="checkbox" class="material-filter" value="bead" checked> Bead</label>
-    <label><input type="checkbox" class="material-filter" value="shell_bead" checked> Shell bead</label>
-    <label><input type="checkbox" class="material-filter" value="bone_ivory" checked> Bone/Ivory</label>
-    <label><input type="checkbox" class="material-filter" value="copper" checked> Copper</label>
-    <label><input type="checkbox" class="material-filter" value="fauna" checked> Fauna</label>
-    <label><input type="checkbox" class="material-filter" value="misc" checked> Misc</label>
+    <span class="layers-wrap" id="layersWrap">
+      <button type="button" class="layers-btn" id="layersBtn">&#128205; Filter by Location</button>
+      <div class="layers-box">
+        <div class="location-pills">
+          <button type="button" class="location-pill active" data-layer="area" id="areaPillBtn">Area</button>
+          <button type="button" class="location-pill active" data-layer="loci">Loci</button>
+          <button type="button" class="location-pill active" data-layer="section">Section</button>
+        </div>
+        <div class="area-subfilter" id="areaSubfilter">
+          <div class="area-subfilter-label">Which area(s):</div>
+          <div class="area-subfilter-pills">
+            <button type="button" class="area-sub-pill active" data-area="I">Area I</button>
+            <button type="button" class="area-sub-pill active" data-area="II">Area II</button>
+            <button type="button" class="area-sub-pill active" data-area="III">Area III</button>
+            <button type="button" class="area-sub-pill active" data-area="VII">Area VII</button>
+          </div>
+          <button type="button" id="resetAreaSubBtn">Reset</button>
+        </div>
+      </div>
+    </span>
   </div>
   <div id="statusNote">Loading live data&hellip;</div>
 </div>
+
+<div id="materialFilterBar">
+  <span class="label">FILTER BY MATERIAL:</span>
+  <button class="material-pill active" data-material="flint">&#128298; Flint</button>
+  <button class="material-pill active" data-material="ossuary">&#9905;&#65039; Ossuary</button>
+  <button class="material-pill active" data-material="chalice">&#127863; Chalice</button>
+  <button class="material-pill active" data-material="pottery">&#127994; Pottery</button>
+  <button class="material-pill active" data-material="basalt">&#129704; Basalt</button>
+  <button class="material-pill active" data-material="bead">&#128255;&#65039; Bead</button>
+  <button class="material-pill active" data-material="shell_bead">&#128026; Shell bead</button>
+  <button class="material-pill active" data-material="bone_ivory">&#129460; Bone/Ivory</button>
+  <button class="material-pill active" data-material="copper">&#128297; Copper</button>
+  <button class="material-pill active" data-material="fauna">&#128062; Fauna</button>
+  <button class="material-pill active" data-material="misc">&#10067; Misc</button>
+  <button id="clearMaterialBtn">Clear</button>
+</div>
+<div id="materialResultBar"><span id="materialResultNote"></span></div>
 
 <div id="main">
   <div id="stage">
@@ -518,6 +598,8 @@
     <div id="tableFilters">
       <select id="tableMaterialFilter"><option value="">All material types</option></select>
       <select id="tableAreaFilter"><option value="">All areas</option></select>
+      <select id="tableSectionFilter"><option value="">All sections</option></select>
+      <select id="tableLocusFilter"><option value="">All loci</option></select>
       <input type="text" id="tableSearch" placeholder="Search description, reg. no...">
     </div>
     <div id="tableCount"></div>
@@ -554,10 +636,10 @@ const svgNS = 'http://www.w3.org/2000/svg';
 const MATERIAL_STYLE = {
   flint:       { color: '#8a8a8a', emoji: '\ud83d\udd2a' },
   ossuary:     { color: '#c98b4a', emoji: '\u26b1\ufe0f' },
-  chalice:     { color: '#b95d8a', emoji: '\ud83c\udff7' },
+  chalice:     { color: '#b95d8a', emoji: '\ud83c\udf77' },
   pottery:     { color: '#c9432f', emoji: '\ud83c\udffa' },
   basalt:      { color: '#4a4a4a', emoji: '\ud83e\udea8' },
-  bead:        { color: '#d9c34a', emoji: '\ud83d\udcff' },
+  bead:        { color: '#d9c34a', emoji: '\ud83d\udcff\ufe0f' },
   shell_bead:  { color: '#7fd6c9', emoji: '\ud83d\udc1a' },
   bone_ivory:  { color: '#e8e2d0', emoji: '\ud83e\uddb4' },
   copper:      { color: '#b5651d', emoji: '\ud83d\udd29' },
@@ -578,7 +660,8 @@ function locusIdFromSvgId(svgId) {
 }
 
 let lociData = {};
-let findsData = {};   // locus_id -> [ finds ]
+let findsData = {};
+let allSquares = [];   // locus_id -> [ finds ]
 let allFinds = [];      // flat list, each find annotated with its locus_id(s)
 let activeMaterials = new Set(Object.keys(MATERIAL_STYLE));
 
@@ -587,6 +670,9 @@ async function loadData() {
     const lociRes = await fetch(`${SUPABASE_URL}/rest/v1/loci?select=*`, { headers });
     const loci = await lociRes.json();
     loci.forEach(l => lociData[l.locus_id] = l);
+
+    const squaresRes = await fetch(`${SUPABASE_URL}/rest/v1/squares?select=area_id,letter&order=area_id,letter`, { headers });
+    allSquares = await squaresRes.json();
 
     const flRes = await fetch(`${SUPABASE_URL}/rest/v1/find_locus?select=locus_id,finds(*)`, { headers });
     const fl = await flRes.json();
@@ -603,6 +689,7 @@ async function loadData() {
       `${loci.length} loci \u00b7 ${allFinds.length} find-locus links loaded`;
 
     renderFindIcons();
+    updateMaterialResultNote();
     populateTableFilters();
     renderTable();
   } catch (err) {
@@ -620,7 +707,8 @@ function renderFindIcons() {
     const svgId = 'Pq_cave_L_' + locusId.replace(/^L/, '');
     const locusEl = document.getElementById(svgId);
     if (!locusEl) return;
-    const finds = findsData[locusId].filter(f => activeMaterials.has(f.material_type));
+    const locusArea = (lociData[locusId] || {}).area_id;
+    const finds = findsData[locusId].filter(f => activeMaterials.has(f.material_type) && (!locusArea || activeAreas.has(locusArea)));
     if (!finds.length) return;
 
     // Build a clip path from the locus's own shape(s), so icons never render outside its true boundary
@@ -668,11 +756,45 @@ function renderFindIcons() {
   });
 }
 
-document.querySelectorAll('.material-filter').forEach(cb => {
-  cb.addEventListener('change', () => {
-    activeMaterials = new Set(Array.from(document.querySelectorAll('.material-filter:checked')).map(c => c.value));
+document.querySelectorAll('.material-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const mat = pill.dataset.material;
+    if (activeMaterials.has(mat)) { activeMaterials.delete(mat); pill.classList.remove('active'); }
+    else { activeMaterials.add(mat); pill.classList.add('active'); }
     renderFindIcons();
+    updateMaterialResultNote();
   });
+});
+
+document.getElementById('clearMaterialBtn').addEventListener('click', () => {
+  activeMaterials.clear();
+  document.querySelectorAll('.material-pill').forEach(p => p.classList.remove('active'));
+  renderFindIcons();
+  updateMaterialResultNote();
+});
+
+function updateMaterialResultNote() {
+  const note = document.getElementById('materialResultNote');
+  const inScope = allFinds.filter(f => !f.area_id || activeAreas.has(f.area_id));
+  const totalActive = inScope.filter(f => activeMaterials.has(f.material_type)).length;
+  const areaScopeNote = activeAreas.size < 4 ? ` (within Area ${[...activeAreas].join('/')})` : '';
+  if (activeMaterials.size === 0) {
+    note.textContent = 'No material types selected \u2014 no finds shown on the map.';
+  } else if (activeMaterials.size === Object.keys(MATERIAL_STYLE).length && areaScopeNote === '') {
+    note.textContent = `Showing all ${allFinds.length} find(s).`;
+  } else {
+    const labels = [...activeMaterials].join(', ');
+    note.textContent = `${totalActive} find(s) match: ${labels}${areaScopeNote}.`;
+  }
+}
+
+const layersWrap = document.getElementById('layersWrap');
+document.getElementById('layersBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  layersWrap.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (layersWrap.classList.contains('open') && !layersWrap.contains(e.target)) layersWrap.classList.remove('open');
 });
 
 // ---- Click handling (areas/squares/loci) ----
@@ -717,6 +839,7 @@ function selectElement(el, kind) {
       html += `<div class="field"><div class="field-label">Phase</div><div class="field-value">${escapeHtml(locus.phase || 'not stated')}</div></div>`;
       if (locus.boundary_certainty === 'approximate') html += `<div class="field"><div class="field-value" style="color:#e0c15c;">\u26a0 Approximate boundary</div></div>`;
       if (locus.description) html += `<div class="field"><div class="field-label">Description</div><div class="field-value">${escapeHtml(locus.description)}</div></div>`;
+      if (locus.squares) html += `<div class="field"><div class="field-label">Made by squares</div><div class="field-value">${escapeHtml(locus.squares)}</div></div>`;
     }
     html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
     finds.forEach(f => {
@@ -749,9 +872,58 @@ function selectFind(f) {
 function setLayerVisibility(className, visible) {
   svgRoot.querySelectorAll('.' + className).forEach(el => el.classList.toggle('layer-hidden', !visible));
 }
-document.getElementById('toggleAreas').addEventListener('change', (e) => setLayerVisibility('pq-area-shape', e.target.checked));
-document.getElementById('toggleSquares').addEventListener('change', (e) => setLayerVisibility('pq-square-shape', e.target.checked));
-document.getElementById('toggleLoci').addEventListener('change', (e) => setLayerVisibility('pq-locus-shape', e.target.checked));
+
+// ---- Location filter: 3 layer-type toggles (Area/Loci/Section), OR logic -- ----
+// ---- independently show/hide each layer type, non-exclusive               ----
+const LAYER_CLASS_MAP = { area: 'pq-area-shape', loci: 'pq-locus-shape', section: 'pq-square-shape' };
+document.querySelectorAll('.location-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    pill.classList.toggle('active');
+    const layer = pill.dataset.layer;
+    setLayerVisibility(LAYER_CLASS_MAP[layer], pill.classList.contains('active'));
+    if (layer === 'area') {
+      document.getElementById('areaSubfilter').classList.toggle('visible', pill.classList.contains('active'));
+    }
+  });
+});
+
+// ---- Area sub-filter: which specific area(s) to scope the map to ----
+// (multiple can be active at once -- e.g. Area I + Area III both shown)
+let activeAreas = new Set(['I', 'II', 'III', 'VII']);
+
+function areaOfElement(el) {
+  const id = el.id || '';
+  let m = id.match(/^Pq_cave_area_([IVX]+)(?:_[A-Z])?$/);
+  if (m) return m[1];
+  const locusId = locusIdFromSvgId(id);
+  if (locusId && lociData[locusId]) return lociData[locusId].area_id;
+  return null;
+}
+
+function applyAreaSubfilter() {
+  svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape, .pq-locus-shape').forEach(el => {
+    const area = areaOfElement(el);
+    const hidden = area && !activeAreas.has(area);
+    el.classList.toggle('area-scoped-hidden', !!hidden);
+  });
+  renderFindIcons();
+  updateMaterialResultNote();
+}
+
+document.querySelectorAll('.area-sub-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const area = pill.dataset.area;
+    if (activeAreas.has(area)) { activeAreas.delete(area); pill.classList.remove('active'); }
+    else { activeAreas.add(area); pill.classList.add('active'); }
+    applyAreaSubfilter();
+  });
+});
+
+document.getElementById('resetAreaSubBtn').addEventListener('click', () => {
+  activeAreas = new Set(['I', 'II', 'III', 'VII']);
+  document.querySelectorAll('.area-sub-pill').forEach(p => p.classList.add('active'));
+  applyAreaSubfilter();
+});
 
 // ---- View toggle: Map vs Table ----
 document.getElementById('mapViewBtn').addEventListener('click', () => {
@@ -774,13 +946,33 @@ function populateTableFilters() {
     const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
     matSel.appendChild(opt);
   });
+
   const areaSel = document.getElementById('tableAreaFilter');
   [...new Set(allFinds.map(f => f.area_id))].sort().forEach(a => {
-    const opt = document.createElement('option'); opt.value = a; opt.textContent = 'Area ' + a;
+    const opt = document.createElement('option'); opt.value = a; opt.textContent = 'Pq_cave_area_' + a;
     areaSel.appendChild(opt);
   });
+
+  // Section (square) dropdown -- populated from the real squares table, not a placeholder list
+  const sectionSel = document.getElementById('tableSectionFilter');
+  allSquares.forEach(sq => {
+    const opt = document.createElement('option');
+    opt.value = sq.area_id + '|' + sq.letter;
+    opt.textContent = `Pq_cave_area_${sq.area_id}_${sq.letter}`;
+    sectionSel.appendChild(opt);
+  });
+
+  // Locus dropdown -- populated from the real loci actually linked to at least one find
+  const locusSel = document.getElementById('tableLocusFilter');
+  [...new Set(allFinds.map(f => f.locus_id))].sort().forEach(l => {
+    const opt = document.createElement('option'); opt.value = l; opt.textContent = l;
+    locusSel.appendChild(opt);
+  });
+
   matSel.addEventListener('change', renderTable);
   areaSel.addEventListener('change', renderTable);
+  sectionSel.addEventListener('change', renderTable);
+  locusSel.addEventListener('change', renderTable);
   document.getElementById('tableSearch').addEventListener('input', renderTable);
   document.querySelectorAll('#tableView th').forEach(th => th.addEventListener('click', () => sortTable(th.dataset.col)));
 }
@@ -794,11 +986,20 @@ function sortTable(col) {
 function renderTable() {
   const mat = document.getElementById('tableMaterialFilter').value;
   const area = document.getElementById('tableAreaFilter').value;
+  const sectionVal = document.getElementById('tableSectionFilter').value;
+  const locusVal = document.getElementById('tableLocusFilter').value;
   const search = document.getElementById('tableSearch').value.toLowerCase();
 
   let rows = allFinds.filter(f => {
     if (mat && f.material_type !== mat) return false;
     if (area && f.area_id !== area) return false;
+    if (locusVal && f.locus_id !== locusVal) return false;
+    if (sectionVal) {
+      const [secArea, secLetter] = sectionVal.split('|');
+      if (f.area_id !== secArea) return false;
+      const tokens = (f.section || '').split(',').map(s => s.trim().replace(/^(northern|southern|eastern|western|se corner of|west balk|\+ sides of)\s*/i, ''));
+      if (!tokens.includes(secLetter)) return false;
+    }
     if (search) {
       const hay = `${f.description||''} ${f.reg_no||''} ${f.subtype||''}`.toLowerCase();
       if (!hay.includes(search)) return false;
