@@ -28,7 +28,7 @@
   .nav-btn:hover { background: rgba(0,0,0,0.07); }
   .nav-btn.active { background: var(--accent2); color: #fff; }
 
-  .card { width: 100%; max-width: 600px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin-top: 24px; }
+  .card { width: 100%; max-width: 620px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin-top: 24px; }
   h1 { font-size: 19px; margin: 0 0 4px; }
   .sub { color: var(--muted); font-size: 13px; margin: 0 0 24px; line-height: 1.5; }
   label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text); margin: 16px 0 6px; }
@@ -38,9 +38,19 @@
   }
   textarea { resize: vertical; min-height: 70px; }
   ::placeholder { color: var(--text); opacity: 0.55; }
-  .locus-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-height: 160px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
-  .locus-chip { font-size: 11.5px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border); background: #26241f; color: var(--muted); cursor: pointer; user-select: none; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row > div { flex: 1; }
+  #ossuaryCategoryRow { display: none; }
+  #ossuaryCategoryRow.visible { display: block; }
+  .locus-picker { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+  .locus-row { display: flex; align-items: center; gap: 8px; }
+  .locus-chip { font-size: 11.5px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border); background: #26241f; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
   .locus-chip.selected { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .specific-square-input {
+    display: none; flex: 1; background: #171613; border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 8px; color: var(--text); font-size: 12px;
+  }
+  .locus-row.selected .specific-square-input { display: block; }
   .radio-item { display: block; font-size: 13px; margin: 6px 0; cursor: pointer; }
   .divider { border-top: 1px solid var(--border); margin: 24px 0 4px; }
   button { font-size: 13px; padding: 9px 16px; border-radius: 7px; border: 1px solid var(--border); background: #302d26; color: var(--text); cursor: pointer; }
@@ -65,29 +75,61 @@
 
 <div class="card">
   <h1>Add a Find</h1>
-  <p class="sub">Record a new artifact from the excavation report. A find can be linked to more than one locus (e.g. an object found scattered across a boundary) &mdash; select all that apply below.</p>
+  <p class="sub">Record a new artifact from the excavation report. A find can be linked to more than one locus (e.g. an object found scattered across a boundary) &mdash; select all that apply below, and add the specific square within that locus if the source states it.</p>
 
-  <label>Material type <span style="color:var(--danger)">*</span></label>
-  <select id="materialType">
-    <option value="">Select&hellip;</option>
-    <option value="flint">Flint</option>
-    <option value="ossuary">Ossuary</option>
-    <option value="chalice">Chalice</option>
-    <option value="pottery">Pottery (other)</option>
-    <option value="basalt">Basalt</option>
-    <option value="bead">Bead</option>
-    <option value="shell_bead">Shell bead</option>
-    <option value="bone_ivory">Bone / Ivory</option>
-    <option value="copper">Copper</option>
-    <option value="fauna">Fauna</option>
-    <option value="misc">Miscellaneous</option>
-  </select>
+  <div class="field-row">
+    <div>
+      <label>Artifact category <span style="color:var(--danger)">*</span></label>
+      <select id="artifactCategory">
+        <option value="">Select&hellip;</option>
+        <option value="ossuary">Ossuary</option>
+        <option value="chalice">Chalice</option>
+        <option value="pottery">Pottery (other)</option>
+        <option value="flint_tool">Flint tool</option>
+        <option value="basalt_tool">Basalt tool</option>
+        <option value="bead">Bead</option>
+        <option value="shell_bead">Shell bead</option>
+        <option value="bone_ivory_object">Bone / Ivory object</option>
+        <option value="copper_object">Copper object</option>
+        <option value="figurine">Figurine</option>
+        <option value="macehead">Macehead</option>
+        <option value="scepter">Scepter</option>
+        <option value="perforated_object">Perforated object</option>
+        <option value="fauna">Fauna</option>
+        <option value="misc">Miscellaneous</option>
+      </select>
+    </div>
+    <div>
+      <label>Raw material</label>
+      <select id="rawMaterial">
+        <option value="">Select&hellip;</option>
+        <option value="flint">Flint</option>
+        <option value="basalt">Basalt</option>
+        <option value="limestone">Limestone</option>
+        <option value="hematite">Hematite</option>
+        <option value="copper">Copper</option>
+        <option value="bone">Bone</option>
+        <option value="ivory">Ivory</option>
+        <option value="hippopotamus_ivory">Hippopotamus ivory</option>
+        <option value="green_stone">Green stone</option>
+        <option value="stone_other">Stone (other)</option>
+        <option value="ceramic">Ceramic</option>
+        <option value="shell">Shell</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="ossuaryCategoryRow">
+    <label>Ossuary category</label>
+    <input type="text" id="ossuaryCategory" placeholder="e.g. Open, Female, Male, Zoomorphic&hellip;">
+  </div>
 
   <label>Subtype</label>
-  <input type="text" id="subtype" placeholder="e.g. A1, B2 (ossuary typology); sickle blade, awl (flint)">
+  <input type="text" id="subtype" placeholder="e.g. A1, D2, F3 (the specific type code within the category above)">
 
   <label>Registration number</label>
-  <input type="text" id="regNo" placeholder="e.g. 2107">
+  <input type="text" id="regNo" placeholder="e.g. 2107, or 3125 (box) / 3147 (lid) for composite objects">
 
   <label>Figure number</label>
   <input type="text" id="figNo" placeholder="e.g. 4.1:1">
@@ -103,7 +145,7 @@
 
   <div class="divider"></div>
 
-  <label>Linked loci <span style="color:var(--danger)">*</span> <span style="text-transform:none; color:var(--muted);">(click all that apply)</span></label>
+  <label>Linked loci <span style="color:var(--danger)">*</span> <span style="text-transform:none; color:var(--muted);">(click to select; type a specific square in the box if the source states one)</span></label>
   <div class="locus-picker" id="locusPicker">
     <span style="color:var(--muted); font-size:12px;">Loading loci&hellip;</span>
   </div>
@@ -133,6 +175,10 @@ const headers = {
 
 const selectedLoci = new Set();
 
+document.getElementById('artifactCategory').addEventListener('change', (e) => {
+  document.getElementById('ossuaryCategoryRow').classList.toggle('visible', e.target.value === 'ossuary');
+});
+
 async function loadLoci() {
   const picker = document.getElementById('locusPicker');
   try {
@@ -142,14 +188,18 @@ async function loadLoci() {
       picker.innerHTML = '<span style="color:var(--muted); font-size:12px;">No loci found in the database yet.</span>';
       return;
     }
-    picker.innerHTML = loci.map(l =>
-      `<span class="locus-chip" data-locus="${l.locus_id}">${l.locus_id} <span style="opacity:0.6;">(Area ${l.area_id})</span></span>`
-    ).join('');
+    picker.innerHTML = loci.map(l => `
+      <div class="locus-row" data-locus="${l.locus_id}">
+        <span class="locus-chip" data-locus="${l.locus_id}">${l.locus_id} <span style="opacity:0.6;">(Area ${l.area_id})</span></span>
+        <input type="text" class="specific-square-input" placeholder="Specific square(s), e.g. G, P, U, V">
+      </div>
+    `).join('');
     picker.querySelectorAll('.locus-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const id = chip.dataset.locus;
-        if (selectedLoci.has(id)) { selectedLoci.delete(id); chip.classList.remove('selected'); }
-        else { selectedLoci.add(id); chip.classList.add('selected'); }
+        const row = chip.closest('.locus-row');
+        if (selectedLoci.has(id)) { selectedLoci.delete(id); chip.classList.remove('selected'); row.classList.remove('selected'); }
+        else { selectedLoci.add(id); chip.classList.add('selected'); row.classList.add('selected'); }
       });
     });
   } catch (err) {
@@ -164,11 +214,13 @@ function setStatus(text, type) {
 }
 
 document.getElementById('submitBtn').addEventListener('click', async () => {
-  const materialType = document.getElementById('materialType').value;
+  const artifactCategory = document.getElementById('artifactCategory').value;
+  const rawMaterial = document.getElementById('rawMaterial').value;
+  const ossuaryCategory = document.getElementById('ossuaryCategory').value.trim();
   const addedBy = document.getElementById('addedBy').value.trim();
   const certainty = document.querySelector('input[name=certainty]:checked').value;
 
-  if (!materialType) { setStatus('Material type is required.', 'error'); return; }
+  if (!artifactCategory) { setStatus('Artifact category is required.', 'error'); return; }
   if (selectedLoci.size === 0) { setStatus('Select at least one linked locus.', 'error'); return; }
 
   setStatus('Saving find...', 'info');
@@ -179,7 +231,9 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
       method: 'POST',
       headers: { ...headers, Prefer: 'return=representation' },
       body: JSON.stringify({
-        material_type: materialType,
+        artifact_category: artifactCategory,
+        raw_material: rawMaterial || null,
+        ossuary_category: artifactCategory === 'ossuary' ? (ossuaryCategory || null) : null,
         subtype: document.getElementById('subtype').value.trim() || null,
         reg_no: document.getElementById('regNo').value.trim() || null,
         fig_no: document.getElementById('figNo').value.trim() || null,
@@ -194,14 +248,21 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const findRows = await findRes.json();
     const findId = findRows[0].find_id;
 
-    const linkRows = Array.from(selectedLoci).map(locusId => ({ find_id: findId, locus_id: locusId }));
+    const linkRows = Array.from(selectedLoci).map(locusId => {
+      const row = document.querySelector(`.locus-row[data-locus="${locusId}"]`);
+      const specificSquare = row ? row.querySelector('.specific-square-input').value.trim() : '';
+      return { find_id: findId, locus_id: locusId, specific_square: specificSquare || null };
+    });
     const linkRes = await fetch(`${SUPABASE_URL}/rest/v1/find_locus`, {
       method: 'POST', headers, body: JSON.stringify(linkRows)
     });
     if (!linkRes.ok) throw new Error('Find saved, but linking to loci failed (' + linkRes.status + ')');
 
     setStatus(`Saved! Linked to ${selectedLoci.size} locus/loci.`, 'success');
-    document.getElementById('materialType').value = '';
+    document.getElementById('artifactCategory').value = '';
+    document.getElementById('rawMaterial').value = '';
+    document.getElementById('ossuaryCategory').value = '';
+    document.getElementById('ossuaryCategoryRow').classList.remove('visible');
     document.getElementById('subtype').value = '';
     document.getElementById('regNo').value = '';
     document.getElementById('figNo').value = '';
@@ -209,7 +270,11 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     document.getElementById('description').value = '';
     document.getElementById('sourcePage').value = '';
     selectedLoci.clear();
-    document.querySelectorAll('.locus-chip.selected').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.locus-row.selected').forEach(r => {
+      r.classList.remove('selected');
+      r.querySelector('.locus-chip').classList.remove('selected');
+      r.querySelector('.specific-square-input').value = '';
+    });
   } catch (err) {
     setStatus(err.message, 'error');
   } finally {

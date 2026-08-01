@@ -33,20 +33,20 @@
   .view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   #statusNote { font-size: 11.5px; color: var(--muted); }
 
-  .layers-wrap { position: relative; display: inline-block; }
-  .layers-btn {
-    font-size: 12px; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border);
-    background: #26241f; color: var(--muted); cursor: pointer;
+  #locationFilterBar {
+    padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   }
-  .layers-btn:hover { color: var(--text); }
-  .layers-box {
-    display: none; position: absolute; top: 32px; left: 0; z-index: 50;
-    background: #26241f; border: 1px solid var(--border); border-radius: 8px;
-    padding: 10px 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;
+  #locationFilterBar .label { font-size: 11px; color: var(--muted); letter-spacing: 0.03em; margin-right: 4px; }
+  #resetLocationBtn {
+    font-size: 11px; padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; margin-left: 6px;
   }
-  .layers-wrap.open .layers-box { display: block; }
-  .layers-box label { display: block; font-size: 12.5px; color: var(--muted); margin: 6px 0; cursor: pointer; }
-  .layers-box input[type=checkbox] { accent-color: var(--accent); margin-right: 6px; }
+  #resetLocationBtn:hover { color: var(--text); }
+  #locationSubfilterBar {
+    padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    max-height: 100px; overflow-y: auto;
+  }
 
   /* Top-level location pills -- same visual language as the material-type pills below */
   .location-pills { display: flex; gap: 6px; margin-bottom: 4px; }
@@ -58,13 +58,6 @@
   .location-pill:hover { border-color: var(--accent); }
 
   /* One row per scope (Area / Loci / Section), each with its own pill list + reset */
-  .subfilter-row {
-    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
-    align-items: flex-start; gap: 10px; flex-wrap: wrap;
-    display: none;
-  }
-  .subfilter-row.visible { display: flex; }
-  .subfilter-label { font-size: 10.5px; text-transform: uppercase; color: var(--muted); padding-top: 5px; flex-shrink: 0; width: 46px; }
   .subfilter-pills { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; min-width: 160px; }
   .subfilter-pills.scrollable { max-height: 110px; overflow-y: auto; }
   .subfilter-loading { font-size: 11px; color: var(--muted); }
@@ -175,46 +168,30 @@
       <button class="view-btn active" id="mapViewBtn">Map</button>
       <button class="view-btn" id="tableViewBtn">Table</button>
     </div>
-    <div class="ctrl-divider"></div>
-    <span class="layers-wrap" id="layersWrap">
-      <button type="button" class="layers-btn" id="layersBtn">Filter by Location</button>
-      <div class="layers-box">
-        <div class="location-pills">
-          <button type="button" class="location-pill active" data-layer="area">Area</button>
-          <button type="button" class="location-pill active" data-layer="loci">Loci</button>
-          <button type="button" class="location-pill active" data-layer="section">Section</button>
-        </div>
-
-        <div class="subfilter-row" id="areaSubfilterRow">
-          <div class="subfilter-label">Area:</div>
-          <div class="subfilter-pills" id="areaSubPills">
-            <button type="button" class="sub-pill active" data-scope="area" data-value="I">Area I</button>
-            <button type="button" class="sub-pill active" data-scope="area" data-value="II">Area II</button>
-            <button type="button" class="sub-pill active" data-scope="area" data-value="III">Area III</button>
-            <button type="button" class="sub-pill active" data-scope="area" data-value="VII">Area VII</button>
-          </div>
-          <button type="button" class="reset-btn" data-reset="area">Reset</button>
-        </div>
-
-        <div class="subfilter-row" id="lociSubfilterRow">
-          <div class="subfilter-label">Loci:</div>
-          <div class="subfilter-pills scrollable" id="lociSubPills">
-            <span class="subfilter-loading">Loading&hellip;</span>
-          </div>
-          <button type="button" class="reset-btn" data-reset="loci">Reset</button>
-        </div>
-
-        <div class="subfilter-row" id="sectionSubfilterRow">
-          <div class="subfilter-label">Section:</div>
-          <div class="subfilter-pills scrollable" id="sectionSubPills">
-            <span class="subfilter-loading">Loading&hellip;</span>
-          </div>
-          <button type="button" class="reset-btn" data-reset="section">Reset</button>
-        </div>
-      </div>
-    </span>
   </div>
   <div id="statusNote">Loading live data&hellip;</div>
+</div>
+
+<div id="locationFilterBar">
+  <span class="label">FILTER BY LOCATION:</span>
+  <button class="location-pill active" data-scope="area">Area</button>
+  <button class="location-pill" data-scope="loci">Loci</button>
+  <button class="location-pill" data-scope="section">Section</button>
+  <button id="resetLocationBtn">Reset</button>
+</div>
+<div id="locationSubfilterBar">
+  <div class="subfilter-pills" id="areaSubPills">
+    <button type="button" class="sub-pill active" data-scope="area" data-value="I">Area I</button>
+    <button type="button" class="sub-pill active" data-scope="area" data-value="II">Area II</button>
+    <button type="button" class="sub-pill active" data-scope="area" data-value="III">Area III</button>
+    <button type="button" class="sub-pill active" data-scope="area" data-value="VII">Area VII</button>
+  </div>
+  <div class="subfilter-pills" id="lociSubPills" style="display:none;">
+    <span class="subfilter-loading">Loading&hellip;</span>
+  </div>
+  <div class="subfilter-pills" id="sectionSubPills" style="display:none;">
+    <span class="subfilter-loading">Loading&hellip;</span>
+  </div>
 </div>
 
 <div id="materialFilterBar">
@@ -949,8 +926,12 @@ function renderFindIcons() {
     const locusEl = document.getElementById(svgId);
     if (!locusEl) return;
     const locusArea = (lociData[locusId] || {}).area_id;
-    const inLociScope = activeLoci.size === 0 || activeLoci.has(locusId);
-    const finds = findsData[locusId].filter(f => activeMaterials.has(f.artifact_category) && (!locusArea || activeAreas.has(locusArea)) && inLociScope);
+    // Only the currently active scope actually narrows the finds shown --
+    // e.g. while viewing by Section, individual locus/area selections don't apply.
+    let inScope = true;
+    if (activeScope === 'area') inScope = !locusArea || activeAreas.has(locusArea);
+    else if (activeScope === 'loci') inScope = activeLoci.size === 0 || activeLoci.has(locusId);
+    const finds = findsData[locusId].filter(f => activeMaterials.has(f.artifact_category) && inScope);
     if (!finds.length) return;
 
     // Build a clip path from the locus's own shape(s), so icons never render outside its true boundary
@@ -1017,27 +998,25 @@ document.getElementById('clearMaterialBtn').addEventListener('click', () => {
 
 function updateMaterialResultNote() {
   const note = document.getElementById('materialResultNote');
-  const inScope = allFinds.filter(f => !f.area_id || activeAreas.has(f.area_id));
+  let inScope = allFinds;
+  let scopeNote = '';
+  if (activeScope === 'area' && activeAreas.size < 4) {
+    inScope = allFinds.filter(f => !f.area_id || activeAreas.has(f.area_id));
+    scopeNote = ` (within Area ${[...activeAreas].join('/')})`;
+  } else if (activeScope === 'loci' && activeLoci.size > 0 && activeLoci.size < Object.keys(lociData).length) {
+    inScope = allFinds.filter(f => activeLoci.has(f.locus_id));
+    scopeNote = ` (within selected loci)`;
+  }
   const totalActive = inScope.filter(f => activeMaterials.has(f.artifact_category)).length;
-  const areaScopeNote = activeAreas.size < 4 ? ` (within Area ${[...activeAreas].join('/')})` : '';
   if (activeMaterials.size === 0) {
-    note.textContent = 'No material types selected \u2014 no finds shown on the map.';
-  } else if (activeMaterials.size === Object.keys(CATEGORY_STYLE).length && areaScopeNote === '') {
+    note.textContent = 'No categories selected \u2014 no finds shown on the map.';
+  } else if (activeMaterials.size === Object.keys(CATEGORY_STYLE).length && scopeNote === '') {
     note.textContent = `Showing all ${allFinds.length} find(s).`;
   } else {
     const labels = [...activeMaterials].join(', ');
-    note.textContent = `${totalActive} find(s) match: ${labels}${areaScopeNote}.`;
+    note.textContent = `${totalActive} find(s) match: ${labels}${scopeNote}.`;
   }
 }
-
-const layersWrap = document.getElementById('layersWrap');
-document.getElementById('layersBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  layersWrap.classList.toggle('open');
-});
-document.addEventListener('click', (e) => {
-  if (layersWrap.classList.contains('open') && !layersWrap.contains(e.target)) layersWrap.classList.remove('open');
-});
 
 // ---- Click handling (areas/squares/loci) ----
 const allShapes = svgRoot.querySelectorAll('path, rect, g');
@@ -1050,8 +1029,6 @@ allShapes.forEach(el => {
     el.querySelectorAll('path, rect').forEach(child => child.classList.add('pq-locus-shape'));
   }
 });
-
-applyAreaColors();
 
 document.getElementById('stage').addEventListener('click', (e) => {
   let el = e.target;
@@ -1117,21 +1094,6 @@ function setLayerVisibility(className, visible) {
   svgRoot.querySelectorAll('.' + className).forEach(el => el.classList.toggle('layer-hidden', !visible));
 }
 
-// ---- Location filter: 3 layer-type toggles (Area/Loci/Section), OR logic -- ----
-// ---- independently show/hide each layer type, non-exclusive               ----
-const LAYER_CLASS_MAP = { area: 'pq-area-shape', loci: 'pq-locus-shape', section: 'pq-square-shape' };
-const SUBFILTER_ROW_MAP = { area: 'areaSubfilterRow', loci: 'lociSubfilterRow', section: 'sectionSubfilterRow' };
-document.querySelectorAll('.location-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    pill.classList.toggle('active');
-    const isActive = pill.classList.contains('active');
-    setLayerVisibility(LAYER_CLASS_MAP[pill.dataset.layer], isActive);
-    document.getElementById(SUBFILTER_ROW_MAP[pill.dataset.layer]).classList.toggle('visible', isActive);
-  });
-});
-// Rows start visible, matching the pills' default "active" state
-Object.values(SUBFILTER_ROW_MAP).forEach(rowId => document.getElementById(rowId).classList.add('visible'));
-
 function areaOfElement(el) {
   const id = el.id || '';
   let m = id.match(/^Pq_cave_area_([IVX]+)(?:_[A-Z])?$/);
@@ -1161,8 +1123,10 @@ function applyAreaColors() {
   });
 }
 
-// ---- Three independent sub-filters: which specific area(s) / locus/loci / section(s) ----
-// ---- are in scope. Each defaults to "everything active" once real data loads.        ----
+// ---- Location filter, rebuilt: single active scope (Area / Loci / Section),      ----
+// ---- exclusive selection -- picking one shows ONLY that layer type on the map    ----
+// ---- and reveals ONLY its own sub-filter pill list for narrowing further.        ----
+let activeScope = 'area';
 let activeAreas = new Set(['I', 'II', 'III', 'VII']);
 let activeLoci = new Set();
 let activeSections = new Set();
@@ -1184,15 +1148,16 @@ function populateLocationSubPills() {
 
 function applyLocationSubfilters() {
   svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape, .pq-locus-shape').forEach(el => {
-    const area = areaOfElement(el);
-    let hidden = area && !activeAreas.has(area);
-    if (!hidden && el.classList.contains('pq-square-shape')) {
+    let hidden = false;
+    if (activeScope === 'area') {
+      const area = areaOfElement(el);
+      hidden = area && !activeAreas.has(area);
+    } else if (activeScope === 'section') {
       const key = squareKeyOfElement(el);
-      if (key && !activeSections.has(key)) hidden = true;
-    }
-    if (!hidden) {
+      hidden = key && !activeSections.has(key);
+    } else if (activeScope === 'loci') {
       const locusId = locusIdFromSvgId(el.id);
-      if (locusId && !activeLoci.has(locusId)) hidden = true;
+      hidden = locusId && !activeLoci.has(locusId);
     }
     el.classList.toggle('area-scoped-hidden', !!hidden);
   });
@@ -1200,27 +1165,45 @@ function applyLocationSubfilters() {
   updateMaterialResultNote();
 }
 
-// Single delegated handler covers the static Area pills AND the dynamically-built Loci/Section pills
-document.getElementById('layersWrap').addEventListener('click', (e) => {
-  const pill = e.target.closest('.sub-pill');
-  if (pill) {
-    const scope = pill.dataset.scope, value = pill.dataset.value;
-    const targetSet = scope === 'area' ? activeAreas : scope === 'loci' ? activeLoci : activeSections;
-    if (targetSet.has(value)) { targetSet.delete(value); pill.classList.remove('active'); }
-    else { targetSet.add(value); pill.classList.add('active'); }
-    applyLocationSubfilters();
-    return;
-  }
-  const resetBtn = e.target.closest('.reset-btn');
-  if (resetBtn) {
-    const scope = resetBtn.dataset.reset;
-    if (scope === 'area') activeAreas = new Set(['I', 'II', 'III', 'VII']);
-    else if (scope === 'loci') activeLoci = new Set(Object.keys(lociData).filter(id => lociData[id].svg_element_id));
-    else if (scope === 'section') activeSections = new Set(allSquares.map(sq => `${sq.area_id}|${sq.letter}`));
-    document.querySelectorAll(`.sub-pill[data-scope="${scope}"]`).forEach(p => p.classList.add('active'));
-    applyLocationSubfilters();
-  }
+function setActiveScope(scope) {
+  activeScope = scope;
+  document.querySelectorAll('.location-pill').forEach(p => p.classList.toggle('active', p.dataset.scope === scope));
+  document.getElementById('areaSubPills').style.display = scope === 'area' ? 'flex' : 'none';
+  document.getElementById('lociSubPills').style.display = scope === 'loci' ? 'flex' : 'none';
+  document.getElementById('sectionSubPills').style.display = scope === 'section' ? 'flex' : 'none';
+  setLayerVisibility('pq-area-shape', scope === 'area');
+  setLayerVisibility('pq-square-shape', scope === 'section');
+  setLayerVisibility('pq-locus-shape', scope === 'loci');
+  applyLocationSubfilters();
+}
+
+document.querySelectorAll('.location-pill').forEach(pill => {
+  pill.addEventListener('click', () => setActiveScope(pill.dataset.scope));
 });
+
+// Delegated: handles the static Area pills AND the dynamically-built Loci/Section pills
+document.getElementById('locationSubfilterBar').addEventListener('click', (e) => {
+  const pill = e.target.closest('.sub-pill');
+  if (!pill) return;
+  const scope = pill.dataset.scope, value = pill.dataset.value;
+  const targetSet = scope === 'area' ? activeAreas : scope === 'loci' ? activeLoci : activeSections;
+  if (targetSet.has(value)) { targetSet.delete(value); pill.classList.remove('active'); }
+  else { targetSet.add(value); pill.classList.add('active'); }
+  applyLocationSubfilters();
+});
+
+document.getElementById('resetLocationBtn').addEventListener('click', () => {
+  if (activeScope === 'area') activeAreas = new Set(['I', 'II', 'III', 'VII']);
+  else if (activeScope === 'loci') activeLoci = new Set(Object.keys(lociData).filter(id => lociData[id].svg_element_id));
+  else if (activeScope === 'section') activeSections = new Set(allSquares.map(sq => `${sq.area_id}|${sq.letter}`));
+  document.querySelectorAll(`.sub-pill[data-scope="${activeScope}"]`).forEach(p => p.classList.add('active'));
+  applyLocationSubfilters();
+});
+
+// Initial layer visibility matches the default scope ('area')
+setLayerVisibility('pq-area-shape', true);
+setLayerVisibility('pq-square-shape', false);
+setLayerVisibility('pq-locus-shape', false);
 
 // ---- View toggle: Map vs Table ----
 document.getElementById('mapViewBtn').addEventListener('click', () => {
