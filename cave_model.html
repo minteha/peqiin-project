@@ -60,8 +60,10 @@
   /* One row per scope (Area / Loci / Section), each with its own pill list + reset */
   .subfilter-row {
     margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
-    display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
+    align-items: flex-start; gap: 10px; flex-wrap: wrap;
+    display: none;
   }
+  .subfilter-row.visible { display: flex; }
   .subfilter-label { font-size: 10.5px; text-transform: uppercase; color: var(--muted); padding-top: 5px; flex-shrink: 0; width: 46px; }
   .subfilter-pills { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; min-width: 160px; }
   .subfilter-pills.scrollable { max-height: 110px; overflow-y: auto; }
@@ -183,7 +185,7 @@
           <button type="button" class="location-pill active" data-layer="section">Section</button>
         </div>
 
-        <div class="subfilter-row">
+        <div class="subfilter-row" id="areaSubfilterRow">
           <div class="subfilter-label">Area:</div>
           <div class="subfilter-pills" id="areaSubPills">
             <button type="button" class="sub-pill active" data-scope="area" data-value="I">Area I</button>
@@ -194,7 +196,7 @@
           <button type="button" class="reset-btn" data-reset="area">Reset</button>
         </div>
 
-        <div class="subfilter-row">
+        <div class="subfilter-row" id="lociSubfilterRow">
           <div class="subfilter-label">Loci:</div>
           <div class="subfilter-pills scrollable" id="lociSubPills">
             <span class="subfilter-loading">Loading&hellip;</span>
@@ -202,7 +204,7 @@
           <button type="button" class="reset-btn" data-reset="loci">Reset</button>
         </div>
 
-        <div class="subfilter-row">
+        <div class="subfilter-row" id="sectionSubfilterRow">
           <div class="subfilter-label">Section:</div>
           <div class="subfilter-pills scrollable" id="sectionSubPills">
             <span class="subfilter-loading">Loading&hellip;</span>
@@ -216,16 +218,20 @@
 </div>
 
 <div id="materialFilterBar">
-  <span class="label">FILTER BY MATERIAL:</span>
-  <button class="material-pill active" data-material="flint">&#128298; Flint</button>
+  <span class="label">FILTER BY CATEGORY:</span>
   <button class="material-pill active" data-material="ossuary">&#9905;&#65039; Ossuary</button>
   <button class="material-pill active" data-material="chalice">&#127863; Chalice</button>
   <button class="material-pill active" data-material="pottery">&#127994; Pottery</button>
-  <button class="material-pill active" data-material="basalt">&#129704; Basalt</button>
+  <button class="material-pill active" data-material="flint_tool">&#128298; Flint tool</button>
+  <button class="material-pill active" data-material="basalt_tool">&#129704; Basalt tool</button>
   <button class="material-pill active" data-material="bead">&#128255;&#65039; Bead</button>
   <button class="material-pill active" data-material="shell_bead">&#128026; Shell bead</button>
-  <button class="material-pill active" data-material="bone_ivory">&#129460; Bone/Ivory</button>
-  <button class="material-pill active" data-material="copper">&#128297; Copper</button>
+  <button class="material-pill active" data-material="bone_ivory_object">&#129460; Bone/Ivory object</button>
+  <button class="material-pill active" data-material="copper_object">&#128297; Copper object</button>
+  <button class="material-pill active" data-material="figurine">&#127931; Figurine</button>
+  <button class="material-pill active" data-material="macehead">&#128296; Macehead</button>
+  <button class="material-pill active" data-material="scepter">&#129668; Scepter</button>
+  <button class="material-pill active" data-material="perforated_object">&#128280; Perforated object</button>
   <button class="material-pill active" data-material="fauna">&#128062; Fauna</button>
   <button class="material-pill active" data-material="misc">&#10067; Misc</button>
   <button id="clearMaterialBtn">Clear</button>
@@ -818,7 +824,7 @@
     <div id="tableCount"></div>
     <table id="findsTable">
       <thead><tr>
-        <th data-col="material_type">Material</th>
+        <th data-col="artifact_category">Category</th>
         <th data-col="subtype">Subtype</th>
         <th data-col="reg_no">Reg. No.</th>
         <th data-col="locus">Locus</th>
@@ -846,18 +852,26 @@ const svgRoot = document.querySelector('#stage svg');
 const svgNS = 'http://www.w3.org/2000/svg';
 
 // Material type -> { color, emoji } -- used for both map icons and table
-const MATERIAL_STYLE = {
-  flint:       { color: '#8a8a8a', emoji: '\ud83d\udd2a' },
-  ossuary:     { color: '#c98b4a', emoji: '\u26b1\ufe0f' },
-  chalice:     { color: '#b95d8a', emoji: '\ud83c\udf77' },
-  pottery:     { color: '#c9432f', emoji: '\ud83c\udffa' },
-  basalt:      { color: '#4a4a4a', emoji: '\ud83e\udea8' },
-  bead:        { color: '#d9c34a', emoji: '\ud83d\udcff\ufe0f' },
-  shell_bead:  { color: '#7fd6c9', emoji: '\ud83d\udc1a' },
-  bone_ivory:  { color: '#e8e2d0', emoji: '\ud83e\uddb4' },
-  copper:      { color: '#b5651d', emoji: '\ud83d\udd29' },
-  fauna:       { color: '#7fae6f', emoji: '\ud83d\udc3e' },
-  misc:        { color: '#9c9587', emoji: '\u2753' }
+// Renamed from the old, conflated MATERIAL_STYLE: this now represents
+// artifact_category (what an object IS), not raw_material (what it's
+// made of) -- the two got split apart after the Chapter 9 case study
+// showed maceheads made of limestone, hematite, AND copper alike.
+const CATEGORY_STYLE = {
+  ossuary:            { color: '#c98b4a', emoji: '\u26b1\ufe0f' },
+  chalice:            { color: '#b95d8a', emoji: '\ud83c\udf77' },
+  pottery:            { color: '#c9432f', emoji: '\ud83c\udffa' },
+  flint_tool:         { color: '#8a8a8a', emoji: '\ud83d\udd2a' },
+  basalt_tool:        { color: '#4a4a4a', emoji: '\ud83e\udea8' },
+  bead:               { color: '#d9c34a', emoji: '\ud83d\udcff\ufe0f' },
+  shell_bead:         { color: '#7fd6c9', emoji: '\ud83d\udc1a' },
+  bone_ivory_object:  { color: '#e8e2d0', emoji: '\ud83e\uddb4' },
+  copper_object:      { color: '#b5651d', emoji: '\ud83d\udd29' },
+  figurine:           { color: '#a58bd6', emoji: '\ud83c\udfbb' },
+  macehead:           { color: '#7a6a52', emoji: '\ud83d\udd28' },
+  scepter:            { color: '#d9ac6f', emoji: '\ud83e\ude84' },
+  perforated_object:  { color: '#6f8f9c', emoji: '\ud83d\udd18' },
+  fauna:              { color: '#7fae6f', emoji: '\ud83d\udc3e' },
+  misc:               { color: '#9c9587', emoji: '\u2753' }
 };
 
 function classify(id) {
@@ -876,19 +890,31 @@ let lociData = {};
 let findsData = {};
 let allSquares = [];   // locus_id -> [ finds ]
 let allFinds = [];      // flat list, each find annotated with its locus_id(s)
-let activeMaterials = new Set(Object.keys(MATERIAL_STYLE));
+let activeMaterials = new Set(Object.keys(CATEGORY_STYLE));
+
+async function fetchJson(path, label) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers });
+    if (!res.ok) {
+      const bodyText = await res.text();
+      throw new Error(`HTTP ${res.status} on ${label}: ${bodyText.slice(0,200)}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error(`Failed to load ${label}:`, err);
+    return null; // caller decides how to degrade gracefully
+  }
+}
 
 async function loadData() {
-  try {
-    const lociRes = await fetch(`${SUPABASE_URL}/rest/v1/loci?select=*`, { headers });
-    const loci = await lociRes.json();
-    loci.forEach(l => lociData[l.locus_id] = l);
+  const loci = await fetchJson('loci?select=*', 'loci');
+  if (loci) loci.forEach(l => lociData[l.locus_id] = l);
 
-    const squaresRes = await fetch(`${SUPABASE_URL}/rest/v1/squares?select=area_id,letter&order=area_id,letter`, { headers });
-    allSquares = await squaresRes.json();
+  const squares = await fetchJson('squares?select=area_id,letter&order=area_id,letter', 'squares');
+  allSquares = squares || [];
 
-    const flRes = await fetch(`${SUPABASE_URL}/rest/v1/find_locus?select=locus_id,finds(*)`, { headers });
-    const fl = await flRes.json();
+  const fl = await fetchJson('find_locus?select=locus_id,finds(*)', 'find_locus');
+  if (fl) {
     fl.forEach(row => {
       if (!findsData[row.locus_id]) findsData[row.locus_id] = [];
       if (row.finds) {
@@ -897,20 +923,20 @@ async function loadData() {
         allFinds.push({ ...row.finds, locus_id: row.locus_id, area_id: locusInfo.area_id, section: locusInfo.squares, locus_description: locusInfo.description });
       }
     });
-
-    document.getElementById('statusNote').textContent =
-      `${loci.length} loci \u00b7 ${allFinds.length} find-locus links loaded`;
-
-    populateLocationSubPills();
-    applyAreaColors();
-    renderFindIcons();
-    updateMaterialResultNote();
-    populateTableFilters();
-    renderTable();
-  } catch (err) {
-    document.getElementById('statusNote').textContent = 'Could not load live data.';
-    console.error(err);
   }
+
+  const parts = [];
+  if (loci) parts.push(`${loci.length} loci`); else parts.push('loci: FAILED to load');
+  if (squares) parts.push(`${squares.length} squares`); else parts.push('squares: FAILED to load');
+  if (fl) parts.push(`${allFinds.length} find-locus links`); else parts.push('find-locus: FAILED to load');
+  document.getElementById('statusNote').textContent = parts.join(' \u00b7 ');
+
+  populateLocationSubPills();
+  applyAreaColors();
+  renderFindIcons();
+  updateMaterialResultNote();
+  populateTableFilters();
+  renderTable();
 }
 
 // ---- Auto-distributed find icons within each locus shape (jittered, clipped, computed at render time -- never stored) ----
@@ -924,7 +950,7 @@ function renderFindIcons() {
     if (!locusEl) return;
     const locusArea = (lociData[locusId] || {}).area_id;
     const inLociScope = activeLoci.size === 0 || activeLoci.has(locusId);
-    const finds = findsData[locusId].filter(f => activeMaterials.has(f.material_type) && (!locusArea || activeAreas.has(locusArea)) && inLociScope);
+    const finds = findsData[locusId].filter(f => activeMaterials.has(f.artifact_category) && (!locusArea || activeAreas.has(locusArea)) && inLociScope);
     if (!finds.length) return;
 
     // Build a clip path from the locus's own shape(s), so icons never render outside its true boundary
@@ -952,7 +978,7 @@ function renderFindIcons() {
       const col = i % cols, row = Math.floor(i / cols);
       const cx = bbox.x + spacing * (col + 0.5) + (row % 2 === 1 ? spacing/2 : 0);
       const cy = bbox.y + spacing * (row + 0.5);
-      const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
+      const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
 
       const iconEl = document.createElementNS(svgNS, 'g');
       iconEl.setAttribute('class', 'find-icon');
@@ -961,7 +987,7 @@ function renderFindIcons() {
       circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', 3.4);
       circle.setAttribute('fill', style.color);
       const title = document.createElementNS(svgNS, 'title');
-      title.textContent = `${f.material_type}${f.subtype ? ' (' + f.subtype + ')' : ''} \u2014 Reg. ${f.reg_no || '?'}`;
+      title.textContent = `${f.artifact_category}${f.subtype ? ' (' + f.subtype + ')' : ''} \u2014 Reg. ${f.reg_no || '?'}`;
       iconEl.appendChild(circle);
       iconEl.appendChild(title);
       iconEl.addEventListener('click', (e) => { e.stopPropagation(); selectFind(f); });
@@ -992,11 +1018,11 @@ document.getElementById('clearMaterialBtn').addEventListener('click', () => {
 function updateMaterialResultNote() {
   const note = document.getElementById('materialResultNote');
   const inScope = allFinds.filter(f => !f.area_id || activeAreas.has(f.area_id));
-  const totalActive = inScope.filter(f => activeMaterials.has(f.material_type)).length;
+  const totalActive = inScope.filter(f => activeMaterials.has(f.artifact_category)).length;
   const areaScopeNote = activeAreas.size < 4 ? ` (within Area ${[...activeAreas].join('/')})` : '';
   if (activeMaterials.size === 0) {
     note.textContent = 'No material types selected \u2014 no finds shown on the map.';
-  } else if (activeMaterials.size === Object.keys(MATERIAL_STYLE).length && areaScopeNote === '') {
+  } else if (activeMaterials.size === Object.keys(CATEGORY_STYLE).length && areaScopeNote === '') {
     note.textContent = `Showing all ${allFinds.length} find(s).`;
   } else {
     const labels = [...activeMaterials].join(', ');
@@ -1061,9 +1087,9 @@ function selectElement(el, kind) {
     }
     html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
     finds.forEach(f => {
-      const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
+      const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
       html += `<div class="find-card" onclick="selectFind(${JSON.stringify(f).replace(/"/g,'&quot;')})">
-        <div class="find-title">${style.emoji} ${escapeHtml(f.material_type)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
+        <div class="find-title">${style.emoji} ${escapeHtml(f.artifact_category)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
         <div class="find-meta">Reg. ${escapeHtml(f.reg_no || '?')}</div>
         <span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>
       </div>`;
@@ -1076,8 +1102,8 @@ function selectElement(el, kind) {
 }
 
 function selectFind(f) {
-  const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
-  let html = `<span class="type-tag type-find">Find</span><h2>${style.emoji} ${escapeHtml(f.material_type)}</h2>`;
+  const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
+  let html = `<span class="type-tag type-find">Find</span><h2>${style.emoji} ${escapeHtml(f.artifact_category)}</h2>`;
   html += `<div class="field"><div class="field-label">Subtype</div><div class="field-value">${escapeHtml(f.subtype || 'not stated')}</div></div>`;
   html += `<div class="field"><div class="field-label">Registration No.</div><div class="field-value">${escapeHtml(f.reg_no || 'not stated')}</div></div>`;
   html += `<div class="field"><div class="field-label">Figure No.</div><div class="field-value">${escapeHtml(f.fig_no || 'not stated')}</div></div>`;
@@ -1094,12 +1120,17 @@ function setLayerVisibility(className, visible) {
 // ---- Location filter: 3 layer-type toggles (Area/Loci/Section), OR logic -- ----
 // ---- independently show/hide each layer type, non-exclusive               ----
 const LAYER_CLASS_MAP = { area: 'pq-area-shape', loci: 'pq-locus-shape', section: 'pq-square-shape' };
+const SUBFILTER_ROW_MAP = { area: 'areaSubfilterRow', loci: 'lociSubfilterRow', section: 'sectionSubfilterRow' };
 document.querySelectorAll('.location-pill').forEach(pill => {
   pill.addEventListener('click', () => {
     pill.classList.toggle('active');
-    setLayerVisibility(LAYER_CLASS_MAP[pill.dataset.layer], pill.classList.contains('active'));
+    const isActive = pill.classList.contains('active');
+    setLayerVisibility(LAYER_CLASS_MAP[pill.dataset.layer], isActive);
+    document.getElementById(SUBFILTER_ROW_MAP[pill.dataset.layer]).classList.toggle('visible', isActive);
   });
 });
+// Rows start visible, matching the pills' default "active" state
+Object.values(SUBFILTER_ROW_MAP).forEach(rowId => document.getElementById(rowId).classList.add('visible'));
 
 function areaOfElement(el) {
   const id = el.id || '';
@@ -1208,7 +1239,7 @@ document.getElementById('tableViewBtn').addEventListener('click', () => {
 // ---- Table view: filterable/sortable list of all finds ----
 function populateTableFilters() {
   const matSel = document.getElementById('tableMaterialFilter');
-  Object.keys(MATERIAL_STYLE).forEach(m => {
+  Object.keys(CATEGORY_STYLE).forEach(m => {
     const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
     matSel.appendChild(opt);
   });
@@ -1257,7 +1288,7 @@ function renderTable() {
   const search = document.getElementById('tableSearch').value.toLowerCase();
 
   let rows = allFinds.filter(f => {
-    if (mat && f.material_type !== mat) return false;
+    if (mat && f.artifact_category !== mat) return false;
     if (area && f.area_id !== area) return false;
     if (locusVal && f.locus_id !== locusVal) return false;
     if (sectionVal) {
@@ -1283,9 +1314,9 @@ function renderTable() {
 
   document.getElementById('tableCount').textContent = `${rows.length} find${rows.length===1?'':'s'} shown`;
   document.getElementById('findsTableBody').innerHTML = rows.map(f => {
-    const style = MATERIAL_STYLE[f.material_type] || MATERIAL_STYLE.misc;
+    const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
     return `<tr onclick='selectFind(${JSON.stringify(f).replace(/'/g,"&#39;")})'>
-      <td>${style.emoji} ${escapeHtml(f.material_type)}</td>
+      <td>${style.emoji} ${escapeHtml(f.artifact_category)}</td>
       <td>${escapeHtml(f.subtype||'')}</td>
       <td>${escapeHtml(f.reg_no||'')}</td>
       <td>${escapeHtml(f.locus_id)}</td>
