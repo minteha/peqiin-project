@@ -48,26 +48,34 @@
   .layers-box label { display: block; font-size: 12.5px; color: var(--muted); margin: 6px 0; cursor: pointer; }
   .layers-box input[type=checkbox] { accent-color: var(--accent); margin-right: 6px; }
 
-  .location-pills { display: flex; gap: 6px; }
+  /* Top-level location pills -- same visual language as the material-type pills below */
+  .location-pills { display: flex; gap: 6px; margin-bottom: 4px; }
   .location-pill {
-    font-size: 12px; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border);
-    background: #1b1a17; color: var(--muted); cursor: pointer; transition: all 0.15s;
+    font-size: 12px; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--border);
+    background: #26241f; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap;
   }
-  .location-pill.active { border-color: var(--accent2); color: var(--text); background: rgba(111,143,95,0.18); }
-  .area-subfilter { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: none; }
-  .area-subfilter.visible { display: block; }
-  .area-subfilter-label { font-size: 10.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-  .area-subfilter-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
-  .area-sub-pill {
-    font-size: 11.5px; padding: 5px 10px; border-radius: 12px; border: 1px solid var(--border);
-    background: #1b1a17; color: var(--muted); cursor: pointer; transition: all 0.15s;
+  .location-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
+  .location-pill:hover { border-color: var(--accent); }
+
+  /* One row per scope (Area / Loci / Section), each with its own pill list + reset */
+  .subfilter-row {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
   }
-  .area-sub-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
-  #resetAreaSubBtn {
+  .subfilter-label { font-size: 10.5px; text-transform: uppercase; color: var(--muted); padding-top: 5px; flex-shrink: 0; width: 46px; }
+  .subfilter-pills { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; min-width: 160px; }
+  .subfilter-pills.scrollable { max-height: 110px; overflow-y: auto; }
+  .subfilter-loading { font-size: 11px; color: var(--muted); }
+  .sub-pill {
+    font-size: 11px; padding: 4px 9px; border-radius: 12px; border: 1px solid var(--border);
+    background: #1b1a17; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .sub-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
+  .reset-btn {
     font-size: 11px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted); cursor: pointer;
+    background: transparent; color: var(--muted); cursor: pointer; flex-shrink: 0;
   }
-  #resetAreaSubBtn:hover { color: var(--text); }
+  .reset-btn:hover { color: var(--text); }
 
   #materialFilterBar {
     padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -118,12 +126,17 @@
   .certainty-ai_extracted { color: #7fa8d9; border-color: #7fa8d9; }
 
   /* Unified color scheme across all layers -- accent color family, consistent 70% transparency (30% opaque) */
-  .pq-area-shape { fill: rgba(185,138,74,0.3); stroke: var(--accent); stroke-width: 3; stroke-opacity: 0.3; cursor: pointer; transition: opacity 0.15s; }
-  .pq-area-shape:hover { fill-opacity: 0.5; stroke-opacity: 0.6; }
-  .pq-square-shape { fill: rgba(185,138,74,0.3); stroke: var(--accent); stroke-width: 0.75; stroke-opacity: 0.3; cursor: pointer; transition: opacity 0.15s; }
-  .pq-square-shape:hover { fill-opacity: 0.5; stroke-opacity: 0.6; }
-  .pq-locus-shape { fill-opacity: 0.3; stroke: var(--accent); stroke-width: 1.5; stroke-opacity: 0.3; cursor: pointer; transition: opacity 0.15s; }
-  .pq-locus-shape:hover { fill-opacity: 0.5; stroke-opacity: 0.6; }
+  /* Area/Square colors are applied dynamically per-area via JS (see applyAreaColors),
+     since each area needs its own distinct shade -- these are just fallback/hover rules. */
+  .pq-area-shape { fill-opacity: 0.3; stroke-width: 3; stroke-opacity: 0.4; cursor: pointer; transition: opacity 0.15s; }
+  .pq-area-shape:hover { fill-opacity: 0.5; stroke-opacity: 0.7; }
+  .pq-square-shape { fill-opacity: 0.3; stroke-width: 0.75; stroke-opacity: 0.4; cursor: pointer; transition: opacity 0.15s; }
+  .pq-square-shape:hover { fill-opacity: 0.5; stroke-opacity: 0.7; }
+  /* Loci: solid grey, explicitly set (previously had no fill color at all -- defaulted to
+     black, and overlapping semi-transparent square-pieces within a locus group created the
+     uneven "gradient" look). One flat grey now, no per-area variation. */
+  .pq-locus-shape { fill: #8f8a80; fill-opacity: 0.35; stroke: #8f8a80; stroke-width: 1.5; stroke-opacity: 0.5; cursor: pointer; transition: opacity 0.15s; }
+  .pq-locus-shape:hover { fill-opacity: 0.55; stroke-opacity: 0.8; }
   .pq-selected { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 10px #fff); }
   .layer-hidden { display: none !important; }
   .area-scoped-hidden { display: none !important; }
@@ -162,22 +175,39 @@
     </div>
     <div class="ctrl-divider"></div>
     <span class="layers-wrap" id="layersWrap">
-      <button type="button" class="layers-btn" id="layersBtn">&#128205; Filter by Location</button>
+      <button type="button" class="layers-btn" id="layersBtn">Filter by Location</button>
       <div class="layers-box">
         <div class="location-pills">
-          <button type="button" class="location-pill active" data-layer="area" id="areaPillBtn">Area</button>
+          <button type="button" class="location-pill active" data-layer="area">Area</button>
           <button type="button" class="location-pill active" data-layer="loci">Loci</button>
           <button type="button" class="location-pill active" data-layer="section">Section</button>
         </div>
-        <div class="area-subfilter" id="areaSubfilter">
-          <div class="area-subfilter-label">Which area(s):</div>
-          <div class="area-subfilter-pills">
-            <button type="button" class="area-sub-pill active" data-area="I">Area I</button>
-            <button type="button" class="area-sub-pill active" data-area="II">Area II</button>
-            <button type="button" class="area-sub-pill active" data-area="III">Area III</button>
-            <button type="button" class="area-sub-pill active" data-area="VII">Area VII</button>
+
+        <div class="subfilter-row">
+          <div class="subfilter-label">Area:</div>
+          <div class="subfilter-pills" id="areaSubPills">
+            <button type="button" class="sub-pill active" data-scope="area" data-value="I">Area I</button>
+            <button type="button" class="sub-pill active" data-scope="area" data-value="II">Area II</button>
+            <button type="button" class="sub-pill active" data-scope="area" data-value="III">Area III</button>
+            <button type="button" class="sub-pill active" data-scope="area" data-value="VII">Area VII</button>
           </div>
-          <button type="button" id="resetAreaSubBtn">Reset</button>
+          <button type="button" class="reset-btn" data-reset="area">Reset</button>
+        </div>
+
+        <div class="subfilter-row">
+          <div class="subfilter-label">Loci:</div>
+          <div class="subfilter-pills scrollable" id="lociSubPills">
+            <span class="subfilter-loading">Loading&hellip;</span>
+          </div>
+          <button type="button" class="reset-btn" data-reset="loci">Reset</button>
+        </div>
+
+        <div class="subfilter-row">
+          <div class="subfilter-label">Section:</div>
+          <div class="subfilter-pills scrollable" id="sectionSubPills">
+            <span class="subfilter-loading">Loading&hellip;</span>
+          </div>
+          <button type="button" class="reset-btn" data-reset="section">Reset</button>
         </div>
       </div>
     </span>
@@ -204,7 +234,7 @@
 
 <div id="main">
   <div id="stage">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:ns1="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:ns3="http://www.w3.org/1999/xlink" version="1.1" id="svg1" width="3508" height="2480" viewBox="0 0 3508 2480" ns1:docname="cave with locus.svg" inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:ns1="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" version="1.1" id="svg1" width="3508" height="2480" viewBox="0 0 3508 2480" ns1:docname="cave with locus.svg" inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)">
   <defs id="defs1">
     <linearGradient id="linearGradient20" inkscape:collect="always">
       <stop style="stop-color:#de8787;stop-opacity:1;" offset="0" id="stop20" />
@@ -591,7 +621,190 @@
     </g><path d="m 2310.3945,853.1397 498.0492,-16.90907 41.5041,33.81815 72.2478,32.28096 35.3554,29.20659 86.0825,247.48737 -36.8925,10.7603 -63.0247,9.2232 -210.5949,-7.686 c 0,0 -32.2809,-23.0578 -43.0413,-30.7438 -10.7603,-7.6859 -36.8925,-19.9834 -36.8925,-19.9834 l -181.3882,-16.9091 h -102.9917 l -56.876,4.6116 -23.0578,-61.4876 -15.3719,-55.3388 -18.4462,-76.8594 12.2975,-36.89252 7.6859,-49.19004 z" id="Pq_cave_L_104" inkscape:label="Pq_cave_L_104">
       <title>Pq_cave_L_401</title>
     </path>
-    </g>
+    <g id="Pq_cave_L_202" inkscape:label="Pq_cave_L_202"><rect id="Pq_cave_L_202__from_II_W" width="143.478" height="152.17392" x="1670.6522" y="846.73914">
+      <title>Pq_cave_area_II_W</title>
+    </rect>
+    </g><g id="Pq_cave_L_306" inkscape:label="Pq_cave_L_306"><path d="m 1208.6957,998.91304 -2.174,147.82606 -125,2.1739 2.174,-40.2173 -16.3044,-15.2174 -7.6087,-29.3479 -10.8696,-6.5217 4.3479,-55.4348 z" id="Pq_cave_L_306__from_III_U">
+      <title>Pq_cave_area_III_U</title>
+    </path>
+    <path d="m 1202.1739,1150 3.2609,140.2174 -33.6957,5.4348 -55.4348,-53.2609 -17.3913,-29.3478 -16.3043,-17.3913 -4.3478,-13.0435 4.3478,-34.7826 z" id="Pq_cave_L_306__from_III_T">
+      <title>Pq_cave_area_III_T</title>
+    </path>
+    <path d="M 1206.5217,856.52174 1203.2609,997.82609 1055.4348,1000 c 0,0 3.2609,-33.69565 4.3478,-38.04348 1.087,-4.34782 6.5217,-35.86956 6.5217,-35.86956 L 1083.6957,900 l 4.3478,-38.04348 z" id="Pq_cave_L_306__from_III_V">
+      <title>Pq_cave_area_III_V</title>
+    </path>
+    </g><g id="Pq_cave_L_309" inkscape:label="Pq_cave_L_309"><path d="m 1367.3913,530.43478 29.3478,-4.34782 56.5218,7.60869 39.1304,13.04348 18.4783,16.30435 v 134.78261 l -148.9131,6.52174 z" id="Pq_cave_L_309__from_III_L" onmousedown="&#10;">
+      <title>Pq_cave_area_III_L</title>
+    </path>
+    <path d="m 1211.9565,702.17391 v -18.47826 l 46.7392,-53.26087 20.6521,-28.26087 84.7826,-75 -3.2608,169.56522 z" id="Pq_cave_L_309__from_III_R">
+      <title>Pq_cave_area_III_R</title>
+    </path>
+    </g><g id="Pq_cave_L_311" inkscape:label="Pq_cave_L_311"><rect id="Pq_cave_L_311__from_III_H" width="156.52174" height="145.65218" x="1358.6957" y="1144.5652">
+      <title>Pq_cave_area_III_H</title>
+    </rect>
+    <rect id="Pq_cave_L_311__from_III_I" width="154.34782" height="142.39131" x="1358.6957" y="1000">
+      <title>Pq_cave_area_III_I</title>
+    </rect>
+    <rect id="Pq_cave_L_311__from_III_N" width="153.261" height="144.56522" x="1209.7826" y="1148.9131">
+      <title>Pq_cave_area_III_N</title>
+    </rect>
+    <rect id="Pq_cave_L_311__from_III_O" width="152.17392" height="144.56522" x="1209.7826" y="1000">
+      <title>Pq_cave_area_III_O</title>
+    </rect>
+    </g><g id="Pq_cave_L_317" inkscape:label="Pq_cave_L_317"><rect id="Pq_cave_L_317__from_III_O" width="152.17392" height="144.56522" x="1209.7826" y="1000">
+      <title>Pq_cave_area_III_O</title>
+    </rect>
+    </g><g id="Pq_cave_L_318" inkscape:label="Pq_cave_L_318"><rect id="Pq_cave_L_318__from_III_N" width="153.261" height="144.56522" x="1209.7826" y="1148.9131">
+      <title>Pq_cave_area_III_N</title>
+    </rect>
+    </g><g id="Pq_cave_L_214" inkscape:label="Pq_cave_L_214"><path d="m 1960.8696,1441.3043 h 146.7391 l 2.1739,57.6087 c 0,0 -9.7826,1.087 -13.0435,5.4348 -3.2608,4.3479 -16.3043,10.8696 -20.6521,15.2174 -4.3479,4.3478 -17.3913,15.2174 -17.3913,15.2174 0,0 -13.0435,9.7826 -16.3044,16.3044 -3.2609,6.5217 -15.2174,6.5217 -15.2174,6.5217 l -11.9565,-5.4348 c 0,0 -1.087,-2.1739 -5.4348,1.087 -4.3478,3.2608 -27.1739,9.7826 -27.1739,9.7826 l -23.913,8.6956 z" id="Pq_cave_L_214__from_II_G">
+      <title>Pq_cave_area_II_G</title>
+    </path>
+    <rect id="Pq_cave_L_214__from_II_H" width="157.60899" height="150" x="1959.7826" y="1289.1305">
+      <title>Pq_cave_area_II_H</title>
+    </rect>
+    </g><g id="Pq_cave_L_215" inkscape:label="Pq_cave_L_215"><rect id="Pq_cave_L_215__from_II_N" width="143.478" height="145.65218" x="1811.9565" y="1293.4783">
+      <title>Pq_cave_area_II_N</title>
+    </rect>
+    </g><g id="Pq_cave_L_216" inkscape:label="Pq_cave_L_216"><rect id="Pq_cave_L_216__from_II_N" width="143.478" height="145.65218" x="1811.9565" y="1293.4783">
+      <title>Pq_cave_area_II_N</title>
+    </rect>
+    </g><g id="Pq_cave_L_117" inkscape:label="Pq_cave_L_117"><path d="m 2479.4853,1438.8086 v 158.3304 l -111.4462,1.5372 -6.9173,-33.0496 -95.3057,-12.2975 4.6115,-109.909 8.4546,-0.7685 z" id="Pq_cave_L_117__from_I_B">
+      <title>Pq_cave_area_I_B</title>
+    </path>
+    <rect id="Pq_cave_L_117__from_I_C" width="152.18201" height="156.79324" x="2481.0225" y="1438.8086" inkscape:highlight-color="#b5adb4">
+      <title>Pq_cave_area_I_c</title>
+    </rect>
+    <rect id="Pq_cave_L_117__from_I_D" width="159.868" height="152.18167" x="2630.1299" y="1440.3458">
+      <title>Pq_cave_area_I_D</title>
+    </rect>
+    <rect id="Pq_cave_L_117__from_I_E" width="153.71887" height="149.1073" x="2789.9973" y="1440.3458">
+      <title>Pq_cave_area_I_E</title>
+    </rect>
+    <path d="m 2948.3278,1441.883 c 233.6527,-1.5372 233.6527,0 233.6527,0 l -7.6859,3.0743 -13.8347,12.2975 -19.9835,10.7604 -9.2231,6.1487 -19.9835,29.2066 -13.8347,23.0578 -6.1487,12.2975 -13.8347,7.686 -21.5207,15.3719 -32.2809,4.6115 -19.9835,7.686 -9.2231,9.2231 h -19.9835 -24.595 -4.6115 z" id="Pq_cave_L_117__from_I_F">
+      <title>Pq_cave_area_I_F</title>
+    </path>
+    <path d="m 2634.7414,1599.4448 2.3057,227.5039 -27.6694,4.6116 -21.5206,3.843 -19.2149,-6.9174 -17.6776,-19.2149 -28.438,-19.9834 -33.8182,-21.5206 -46.1156,-10.7604 -33.0496,-7.6859 -78.3966,33.8181 10.7603,-57.6445 6.9174,-33.8182 c 0,0 3.0743,-7.6859 3.8429,-13.8347 0.7686,-6.1487 4.6116,-45.347 4.6116,-45.347 l 6.9174,-37.6612 z" id="Pq_cave_L_117__from_I_G">
+      <title>Pq_cave_area_I_G</title>
+    </path>
+    <path d="m 2633.2042,1594.8332 305.9005,-7.6859 v 8.4545 l -13.0661,17.6777 -27.6694,5.3802 -7.6859,41.504 v 33.0496 l -13.0661,35.3553 -23.8265,34.5868 -37.6611,9.9917 -13.0661,7.686 -25.3636,6.1487 -25.3636,13.0661 -13.8347,0.7686 h -20.7521 -13.0661 l -4.6115,1.5372 -10.7603,18.4463 -9.2232,8.4545 -29.2066,4.6116 -10.7603,-6.9174 z" id="Pq_cave_L_117__from_I_H">
+      <title>Pq_cave_area_I_H</title>
+    </path>
+    <path d="m 2328.8408,1298.9244 150.6445,-4.6116 -1.5372,135.2727 v 6.9173 l -200.6031,3.843 43.0413,-80.7024 -3.843,-68.4049 z" id="Pq_cave_L_117__from_I_I">
+      <title>Pq_cave_area_I_I</title>
+    </path>
+    <rect id="Pq_cave_L_117__from_I_J" width="142.959" height="147.57011" x="2481.0225" y="1292.7756" inkscape:highlight-color="#ff6363">
+      <title>Pq_cave_area_I_J</title>
+    </rect>
+    <rect id="Pq_cave_L_117__from_I_K" width="158.33043" height="146.03293" x="2628.5925" y="1295.8501">
+      <title>Pq_cave_area_I_K</title>
+    </rect>
+    <rect id="Pq_cave_L_117__from_I_L" width="152.18167" height="147.57011" x="2785.3857" y="1288.1641">
+      <title>Pq_cave_area_I_L</title>
+    </rect>
+    <rect id="Pq_cave_L_117__from_I_M" width="253.636" height="146.03293" x="2934.4932" y="1292.7756">
+      <title>Pq_cave_area_I_M</title>
+    </rect>
+    </g><g id="Pq_cave_L_301" inkscape:label="Pq_cave_L_301"><path d="m 1211.9565,702.17391 v -18.47826 l 46.7392,-53.26087 20.6521,-28.26087 84.7826,-75 -3.2608,169.56522 z" id="Pq_cave_L_301__from_III_R">
+      <title>Pq_cave_area_III_R</title>
+    </path>
+    <path d="m 1367.3913,530.43478 29.3478,-4.34782 56.5218,7.60869 39.1304,13.04348 18.4783,16.30435 v 134.78261 l -148.9131,6.52174 z" id="Pq_cave_L_301__from_III_L" onmousedown="&#10;">
+      <title>Pq_cave_area_III_L</title>
+    </path>
+    <path d="m 1519.5652,560.86957 18.4783,27.17391 14.1304,5.43478 28.2609,2.17391 21.7391,21.73913 39.1304,33.69566 11.9566,28.26087 -13.0435,2.17391 -17.3913,20.65217 -106.5218,-4.34782 z" id="Pq_cave_L_301__from_III_F">
+      <title>Pq_cave_area_III_F</title>
+    </path>
+    <path d="m 1218.4783,700 h 144.5652 l -2.1739,150 -151.087,1.08696 z" id="Pq_cave_L_301__from_III_Q">
+      <title>Pq_cave_area_III_Q</title>
+    </path>
+    <path d="m 1364.1304,706.52174 147.8261,-2.17391 v 151.08695 l -147.8261,-2.17391 z" id="Pq_cave_L_301__from_III_K">
+      <title>Pq_cave_area_III_K</title>
+    </path>
+    <path d="m 1519.5652,703.26087 96.7391,-2.17391 v 26.08695 l -2.1739,15.2174 29.3479,28.26086 27.1739,7.6087 -3.2609,67.3913 -153.2609,3.26087 z" id="Pq_cave_L_301__from_III_E">
+      <title>Pq_cave_area_III_E</title>
+    </path>
+    <path d="M 1206.5217,856.52174 1203.2609,997.82609 1055.4348,1000 c 0,0 3.2609,-33.69565 4.3478,-38.04348 1.087,-4.34782 6.5217,-35.86956 6.5217,-35.86956 L 1083.6957,900 l 4.3478,-38.04348 z" id="Pq_cave_L_301__from_III_V">
+      <title>Pq_cave_area_III_V</title>
+    </path>
+    <rect id="Pq_cave_L_301__from_III_P" width="155.43478" height="139.13043" x="1206.5217" y="856.52173">
+      <title>Pq_cave_area_III_P</title>
+    </rect>
+    <rect id="Pq_cave_L_301__from_III_J" width="156.52174" height="136.95653" x="1360.8695" y="856.52173">
+      <title>Pq_cave_area_III_J</title>
+    </rect>
+    <rect id="Pq_cave_L_301__from_III_D" width="151.08696" height="150" x="1517.3914" y="847.82611">
+      <title>Pq_cave_area_III_D</title>
+    </rect>
+    <path d="m 1208.6957,998.91304 -2.174,147.82606 -125,2.1739 2.174,-40.2173 -16.3044,-15.2174 -7.6087,-29.3479 -10.8696,-6.5217 4.3479,-55.4348 z" id="Pq_cave_L_301__from_III_U">
+      <title>Pq_cave_area_III_U</title>
+    </path>
+    <rect id="Pq_cave_L_301__from_III_O" width="152.17392" height="144.56522" x="1209.7826" y="1000">
+      <title>Pq_cave_area_III_O</title>
+    </rect>
+    <rect id="Pq_cave_L_301__from_III_I" width="154.34782" height="142.39131" x="1358.6957" y="1000">
+      <title>Pq_cave_area_III_I</title>
+    </rect>
+    <rect id="Pq_cave_L_301__from_III_C" width="145.65218" height="145.65218" x="1516.3043" y="1001.087">
+      <title>Pq_cave_area_III_C</title>
+    </rect>
+    <path d="m 1202.1739,1150 3.2609,140.2174 -33.6957,5.4348 -55.4348,-53.2609 -17.3913,-29.3478 -16.3043,-17.3913 -4.3478,-13.0435 4.3478,-34.7826 z" id="Pq_cave_L_301__from_III_T">
+      <title>Pq_cave_area_III_T</title>
+    </path>
+    <rect id="Pq_cave_L_301__from_III_N" width="153.261" height="144.56522" x="1209.7826" y="1148.9131">
+      <title>Pq_cave_area_III_N</title>
+    </rect>
+    <rect id="Pq_cave_L_301__from_III_H" width="156.52174" height="145.65218" x="1358.6957" y="1144.5652">
+      <title>Pq_cave_area_III_H</title>
+    </rect>
+    <rect id="Pq_cave_L_301__from_III_B" width="142.39131" height="139.13043" x="1515.2174" y="1146.7391">
+      <title>Pq_cave_area_III_B</title>
+    </rect>
+    <path d="m 1106.5217,1294.5652 h 94.5653 l 2.1739,97.8261 -106.5218,-1.087 -2.1739,-100 106.5218,5.4348 -1.087,93.4783 -105.4348,-3.2609 z" id="Pq_cave_L_301__from_III_S">
+      <title>Pq_cave_area_III_S</title>
+    </path>
+    <path d="m 1206.5217,1292.3913 152.174,-1.087 -3.2609,151.087 -10.8696,-17.3913 -9.7826,-3.2609 -23.913,-20.6521 -16.3044,-5.4348 -35.8695,-13.0435 -15.2174,-16.3044 -17.3913,-17.3913 -11.9566,-6.5217 -6.5217,-7.6087 -3.2609,-13.0435 z" id="Pq_cave_L_301__from_III_M">
+      <title>Pq_cave_area_III_M</title>
+    </path>
+    <path d="m 1358.6957,1293.4783 151.0869,-3.2609 5.4348,158.6956 -18.4783,-13.0434 -65.2174,1.0869 c 0,0 -15.2174,0 -19.5652,2.1739 -4.3478,2.1739 -44.5652,10.8696 -44.5652,10.8696 l -1.087,15.2174 z" id="Pq_cave_L_301__from_III_G">
+      <title>Pq_cave_area_III_G</title>
+    </path>
+    <path d="m 1516.3043,1291.3043 139.1305,-2.1739 5.4348,154.3479 -16.3044,2.1739 -17.3913,6.5217 -11.9565,7.6087 c 0,0 -8.6957,4.3478 -9.7826,10.8696 -1.087,6.5217 -7.6087,18.4782 -7.6087,18.4782 l -19.5652,4.3479 -21.7392,3.2608 -9.7826,-4.3478 c 0,0 -5.4348,-2.1739 -6.5217,-6.5217 -1.087,-4.3479 -7.6087,-14.1305 -7.6087,-14.1305 l -15.2174,-22.8261 z" id="Pq_cave_L_301__from_III_A">
+      <title>Pq_cave_area_III_A</title>
+    </path>
+    </g><path d="m 2657.7992,664.0655 236.727,-104.52883 -23.0578,-24.59502 c 0,0 -23.0578,-44.57847 -29.2066,-46.11566 -6.1487,-1.53719 -44.5784,-13.8347 -52.2644,-26.1322 -7.6859,-12.29751 -69.1735,-41.5041 -69.1735,-41.5041 l -29.2066,19.98345 -26.1322,56.87598 -4.6115,73.78506 z" id="Pq_cave_L_103" inkscape:label="Pq_cave_L_103">
+      <title>Pq_cave_L_105</title>
+    </path>
+    <g id="Pq_cave_L_201" inkscape:label="Pq_cave_L_201"><path d="m 2117.3913,1443.4783 150,-5.4348 -6.5217,108.6956 -15.2174,10.8696 -10.8696,-5.4348 -14.1304,-4.3478 -15.2174,11.9565 -2.1739,-8.6956 -2.1739,-10.8696 -16.3044,-15.2174 -18.4782,-2.1739 -9.7827,-2.1739 -42.3913,-21.7392 z">
+      <title>Pq_cave_area_II_A</title>
+    </path>
+    <path d="m 2128.2609,1288.0435 182.6087,1.0869 9.7826,58.6957 -48.9131,89.1304 -147.8261,4.3478 z">
+      <title>Pq_cave_area_II_B</title>
+    </path>
+    <path d="m 1960.8696,1441.3043 h 146.7391 l 2.1739,57.6087 c 0,0 -9.7826,1.087 -13.0435,5.4348 -3.2608,4.3479 -16.3043,10.8696 -20.6521,15.2174 -4.3479,4.3478 -17.3913,15.2174 -17.3913,15.2174 0,0 -13.0435,9.7826 -16.3044,16.3044 -3.2609,6.5217 -15.2174,6.5217 -15.2174,6.5217 l -11.9565,-5.4348 c 0,0 -1.087,-2.1739 -5.4348,1.087 -4.3478,3.2608 -27.1739,9.7826 -27.1739,9.7826 l -23.913,8.6956 z">
+      <title>Pq_cave_area_II_G</title>
+    </path>
+    <rect width="157.60899" height="150" x="1959.7826" y="1289.1305">
+      <title>Pq_cave_area_II_H</title>
+    </rect>
+    <path d="m 1808.6957,1446.7391 144.5652,-6.5217 2.1739,127.1739 -15.2174,5.4348 h -31.5217 l -21.7392,-5.4348 -33.6956,9.7826 -14.1305,5.4348 -29.3478,-15.2174 -1.0869,-16.3043 z" onmouseover="&#10;">
+      <title>Pq_cave_area_II_M</title>
+    </path>
+    <rect width="143.478" height="145.65218" x="1811.9565" y="1293.4783">
+      <title>Pq_cave_area_II_N</title>
+    </rect>
+    <path d="m 1669.5652,1440.2174 138.0435,3.2609 1.087,115.2174 -23.9131,-11.9566 -13.0435,-10.8695 -23.913,-8.6957 -8.6957,-20.6522 -9.7826,-17.3913 -16.3043,-6.5217 -5.4348,-14.1304 -16.3044,-9.7826 -18.4782,-7.6087 v -3.2609 z" onmouseover="&#10;">
+      <title>Pq_cave_area_II_S</title>
+    </path>
+    <rect width="140.217" height="150" x="1667.3914" y="1290.2174">
+      <title>Pq_cave_area_II_T</title>
+    </rect>
+    </g><g id="Pq_cave_L_210" inkscape:label="Pq_cave_L_210"><path d="m 2117.3913,1443.4783 150,-5.4348 -6.5217,108.6956 -15.2174,10.8696 -10.8696,-5.4348 -14.1304,-4.3478 -15.2174,11.9565 -2.1739,-8.6956 -2.1739,-10.8696 -16.3044,-15.2174 -18.4782,-2.1739 -9.7827,-2.1739 -42.3913,-21.7392 z">
+      <title>Pq_cave_area_II_A</title>
+    </path>
+    <path d="m 2128.2609,1288.0435 182.6087,1.0869 9.7826,58.6957 -48.9131,89.1304 -147.8261,4.3478 z">
+      <title>Pq_cave_area_II_B</title>
+    </path>
+    </g></g>
 </svg>
   </div>
   <div id="tableView">
@@ -809,6 +1022,8 @@ allShapes.forEach(el => {
   }
 });
 
+applyAreaColors();
+
 document.getElementById('stage').addEventListener('click', (e) => {
   let el = e.target;
   while (el && el !== svgRoot) {
@@ -898,6 +1113,23 @@ function areaOfElement(el) {
   const locusId = locusIdFromSvgId(id);
   if (locusId && lociData[locusId]) return lociData[locusId].area_id;
   return null;
+}
+
+// Distinct brown shade per area, so both the area outline and every square
+// inside it are recognizably "the same area" by color alone.
+const AREA_COLORS = {
+  I:   '#c99a5c',  // warm light brown
+  II:  '#9c6b3a',  // mid brown
+  III: '#7a4e28',  // deep brown
+  VII: '#c47a4a'   // reddish brown (kept distinct from the other three)
+};
+
+function applyAreaColors() {
+  svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape').forEach(el => {
+    const area = areaOfElement(el);
+    const color = AREA_COLORS[area];
+    if (color) { el.style.fill = color; el.style.stroke = color; }
+  });
 }
 
 function applyAreaSubfilter() {
