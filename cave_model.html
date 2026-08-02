@@ -836,7 +836,13 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 const svgRoot = document.querySelector('#stage svg');
 const svgNS = 'http://www.w3.org/2000/svg';
-const MODEL_VERSION = 'v1.6';  // bump this on each meaningful update, so it's easy to confirm which deploy is actually live
+// Version format: major.minor.patch
+//   major -- a fundamental redesign (e.g. the empty-by-default selection model)
+//   minor -- a new feature (e.g. Select All button, section aggregate panel)
+//   patch -- a bug fix or small tweak (e.g. emoji placement, toggle-undo fix)
+// This batch: 3 patches since v1.6 (emoji moved to buttons, plain-click undo
+// fixed, section aggregate panel added) -> 1.7.3
+const MODEL_VERSION = 'v1.7.3';
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
