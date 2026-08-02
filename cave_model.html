@@ -32,6 +32,29 @@
   .view-btn { font-size: 11.5px; padding: 5px 12px; border-radius: 12px; border: 1px solid var(--border); background: #26241f; color: var(--muted); cursor: pointer; }
   .view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   #statusNote { font-size: 11.5px; color: var(--muted); }
+  .stat-link { color: #6fa8dc; text-decoration: underline; cursor: pointer; }
+  .stat-link:hover { color: #8fc0ea; }
+  #infoModalOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 100; align-items: center; justify-content: center;
+  }
+  #infoModalOverlay.visible { display: flex; }
+  #infoModalBox {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    width: 90%; max-width: 640px; max-height: 80vh; display: flex; flex-direction: column;
+  }
+  #infoModalHeader {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 15px;
+  }
+  #infoModalClose { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; }
+  #infoModalClose:hover { color: var(--text); }
+  #infoModalBody { padding: 14px 18px; overflow-y: auto; font-size: 13px; }
+  .info-citation { color: var(--muted); font-size: 11.5px; font-style: italic; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .info-row { padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .info-row:last-child { border-bottom: none; }
+  .info-row-title { font-weight: 700; }
+  .info-row-sub { color: var(--muted); font-size: 11.5px; }
 
   #controls .label { font-size: 11px; color: var(--muted); letter-spacing: 0.03em; margin: 0 2px 0 4px; }
   .reset-btn, .select-all-btn {
@@ -83,11 +106,11 @@
   }
   .material-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
   .material-pill:hover { border-color: var(--accent); }
-  #clearMaterialBtn {
+  #clearMaterialBtn, #selectAllMaterialBtn {
     font-size: 12px; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--border);
     background: transparent; color: var(--muted); cursor: pointer; margin-left: 4px;
   }
-  #clearMaterialBtn:hover { color: var(--text); }
+  #clearMaterialBtn:hover, #selectAllMaterialBtn:hover { color: var(--text); }
   #materialResultBar {
     min-height: 26px; display: flex; align-items: center; padding: 4px 20px;
     border-bottom: 1px solid var(--border); font-size: 12px; color: var(--accent); flex-shrink: 0;
@@ -205,22 +228,23 @@
 
 <div id="materialFilterBar">
   <span class="label">FILTER BY CATEGORY:</span>
-  <button class="material-pill active" data-material="ossuary">&#9905;&#65039; Ossuary</button>
-  <button class="material-pill active" data-material="chalice">&#127863; Chalice</button>
-  <button class="material-pill active" data-material="pottery">&#127994; Pottery</button>
-  <button class="material-pill active" data-material="flint_tool">&#128298; Flint tool</button>
-  <button class="material-pill active" data-material="basalt_tool">&#129704; Basalt tool</button>
-  <button class="material-pill active" data-material="bead">&#128255;&#65039; Bead</button>
-  <button class="material-pill active" data-material="shell_bead">&#128026; Shell bead</button>
-  <button class="material-pill active" data-material="bone_ivory_object">&#129460; Bone/Ivory object</button>
-  <button class="material-pill active" data-material="copper_object">&#128297; Copper object</button>
-  <button class="material-pill active" data-material="figurine">&#127931; Figurine</button>
-  <button class="material-pill active" data-material="macehead">&#128296; Macehead</button>
-  <button class="material-pill active" data-material="scepter">&#129668; Scepter</button>
-  <button class="material-pill active" data-material="perforated_object">&#128280; Perforated object</button>
-  <button class="material-pill active" data-material="fauna">&#128062; Fauna</button>
-  <button class="material-pill active" data-material="misc">&#10067; Misc</button>
-  <button id="clearMaterialBtn">Clear</button>
+  <button class="material-pill" data-material="ossuary">&#9905;&#65039; Ossuary</button>
+  <button class="material-pill" data-material="chalice">&#127863; Chalice</button>
+  <button class="material-pill" data-material="pottery">&#127994; Pottery</button>
+  <button class="material-pill" data-material="flint_tool">&#128298; Flint tool</button>
+  <button class="material-pill" data-material="basalt_tool">&#129704; Basalt tool</button>
+  <button class="material-pill" data-material="bead">&#128255;&#65039; Bead</button>
+  <button class="material-pill" data-material="shell_bead">&#128026; Shell bead</button>
+  <button class="material-pill" data-material="bone_ivory_object">&#129460; Bone/Ivory object</button>
+  <button class="material-pill" data-material="copper_object">&#128297; Copper object</button>
+  <button class="material-pill" data-material="figurine">&#127931; Figurine</button>
+  <button class="material-pill" data-material="macehead">&#128296; Macehead</button>
+  <button class="material-pill" data-material="scepter">&#129668; Scepter</button>
+  <button class="material-pill" data-material="perforated_object">&#128280; Perforated object</button>
+  <button class="material-pill" data-material="fauna">&#128062; Fauna</button>
+  <button class="material-pill" data-material="misc">&#10067; Misc</button>
+  <button id="selectAllMaterialBtn">&#9989; Select All</button>
+  <button id="clearMaterialBtn">&#10060; Reset</button>
 </div>
 <div id="materialResultBar"><span id="materialResultNote"></span></div>
 
@@ -842,7 +866,7 @@ const svgNS = 'http://www.w3.org/2000/svg';
 //   patch -- a bug fix or small tweak (e.g. emoji placement, toggle-undo fix)
 // This batch: 3 patches since v1.6 (emoji moved to buttons, plain-click undo
 // fixed, section aggregate panel added) -> 1.7.3
-const MODEL_VERSION = 'v1.8.0';  // minor bump: loci now has the same aggregate-selection feature as area/section
+const MODEL_VERSION = 'v1.9.0';  // minor bump: category filter now defaults empty + Select All added; new clickable loci/squares/version info modals
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
@@ -883,7 +907,7 @@ let lociData = {};
 let findsData = {};
 let allSquares = [];   // locus_id -> [ finds ]
 let allFinds = [];      // flat list, each find annotated with its locus_id(s)
-let activeMaterials = new Set(Object.keys(CATEGORY_STYLE));
+let activeMaterials = new Set(); // starts empty, matching the location sub-filters
 
 async function fetchJson(path, label) {
   try {
@@ -919,11 +943,12 @@ async function loadData() {
   }
 
   const parts = [];
-  if (loci) parts.push(`${loci.length} loci`); else parts.push('loci: FAILED to load');
-  if (squares) parts.push(`${squares.length} squares`); else parts.push('squares: FAILED to load');
+  if (loci) parts.push(`<a href="#" class="stat-link" id="lociStatLink">${loci.length} loci</a>`); else parts.push('loci: FAILED to load');
+  if (squares) parts.push(`<a href="#" class="stat-link" id="squaresStatLink">${squares.length} squares</a>`); else parts.push('squares: FAILED to load');
   if (fl) parts.push(`${allFinds.length} find-locus links`); else parts.push('find-locus: FAILED to load');
-  parts.push(MODEL_VERSION);
-  document.getElementById('statusNote').textContent = parts.join(' \u00b7 ');
+  parts.push(`<a href="#" class="stat-link" id="versionStatLink">${MODEL_VERSION}</a>`);
+  document.getElementById('statusNote').innerHTML = parts.join(' \u00b7 ');
+  attachStatLinkHandlers();
 
   populateLocationSubPills();
   applyAreaColors();
@@ -1006,6 +1031,12 @@ document.querySelectorAll('.material-pill').forEach(pill => {
   });
 });
 
+document.getElementById('selectAllMaterialBtn').addEventListener('click', () => {
+  Object.keys(CATEGORY_STYLE).forEach(m => activeMaterials.add(m));
+  document.querySelectorAll('.material-pill').forEach(p => p.classList.add('active'));
+  renderFindIcons();
+  updateMaterialResultNote();
+});
 document.getElementById('clearMaterialBtn').addEventListener('click', () => {
   activeMaterials.clear();
   document.querySelectorAll('.material-pill').forEach(p => p.classList.remove('active'));
@@ -1387,7 +1418,11 @@ function handleScopeToggleClick(e) {
   const el = findScopeShapeFromEvent(e);
   if (!el) return;
   const value = scopeValueForShape(activeScope, el);
-  if (value) { toggleSelection(activeScope, value); selectElement(el, SCOPE_TO_KIND[activeScope]); }
+  // toggleSelection() already correctly updates the panel via applyLocationSubfilters()
+  // (aggregate view, or the empty-state message once the last item is deselected) --
+  // calling selectElement() again here was overwriting that correct empty-state with
+  // a stale "preview" of the just-deselected shape. Removed.
+  if (value) toggleSelection(activeScope, value);
 }
 document.getElementById('stage').addEventListener('click', (e) => {
   if (!e.ctrlKey) return;
@@ -1512,9 +1547,77 @@ function renderTable() {
 // Initialize layer visibility to match the default active scope ('area') --
 // this was dropped during an earlier refactor, which is exactly why everything
 // stayed clickable on first load even though the Area pill showed as active.
+// ---- Info modal system: powers the clickable "N loci" / "N squares" / version ----
+// ---- links in the status bar. Loci/squares cite the source article directly    ----
+// ---- (all current data comes from one monograph); the changelog is plain data  ----
+// ---- kept here in the JS, not a database table -- it's website metadata about  ----
+// ---- this file's own history, not archaeological data, so it doesn't belong    ----
+// ---- alongside the research schema in Supabase.                                ----
+const SOURCE_CITATION = "Shalem, D., Gal, Z., & Smithline, H. (2013). Peqi'in: A Late Chalcolithic Burial Site, Upper Galilee, Israel. Ostracon.";
+
+const CHANGELOG = [
+  { version: 'v1.9.0', notes: 'Category filter now starts empty (matching the location sub-filters) and has a Select All button. "N loci" / "N squares" / the version number are now clickable, opening a list with source citation -- and this changelog itself is the version popup.' },
+  { version: 'v1.8.0', notes: 'Loci now get the same multi-select aggregate panel as Area and Section.' },
+  { version: 'v1.7.3', notes: 'Fixed: Ctrl/middle-click deselecting the last selected item left the panel showing stale data. Moved Select All/Reset emoji onto the buttons themselves (not every pill). Added the section aggregate panel.' },
+  { version: 'v1.7.0', notes: 'Consolidated "Filter by Location" into the topbar to save vertical space; moved Reset into the sub-filter row.' },
+  { version: 'v1.6', notes: 'Added the version stamp itself, so it is possible to confirm which deploy is live.' }
+];
+
+function showInfoModal(title, bodyHtml) {
+  document.getElementById('infoModalTitle').textContent = title;
+  document.getElementById('infoModalBody').innerHTML = bodyHtml;
+  document.getElementById('infoModalOverlay').classList.add('visible');
+}
+document.getElementById('infoModalClose').addEventListener('click', () => {
+  document.getElementById('infoModalOverlay').classList.remove('visible');
+});
+document.getElementById('infoModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'infoModalOverlay') document.getElementById('infoModalOverlay').classList.remove('visible');
+});
+
+function attachStatLinkHandlers() {
+  const lociLink = document.getElementById('lociStatLink');
+  if (lociLink) lociLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const rows = Object.keys(lociData).sort().map(id => {
+      const l = lociData[id];
+      return `<div class="info-row"><div class="info-row-title">${escapeHtml(id)} &mdash; Area ${escapeHtml(l.area_id)}, Phase ${escapeHtml(l.phase || 'not stated')}</div>${l.description ? `<div class="info-row-sub">${escapeHtml(l.description)}</div>` : ''}</div>`;
+    }).join('');
+    showInfoModal(`All Loci (${Object.keys(lociData).length})`, `<div class="info-citation">Source: ${escapeHtml(SOURCE_CITATION)}</div>${rows}`);
+  });
+
+  const squaresLink = document.getElementById('squaresStatLink');
+  if (squaresLink) squaresLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const rows = allSquares.map(sq =>
+      `<div class="info-row"><div class="info-row-title">${escapeHtml(sq.area_id)}-${escapeHtml(sq.letter)}</div></div>`
+    ).join('');
+    showInfoModal(`All Sections (${allSquares.length})`, `<div class="info-citation">Source: ${escapeHtml(SOURCE_CITATION)}</div>${rows}`);
+  });
+
+  const versionLink = document.getElementById('versionStatLink');
+  if (versionLink) versionLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const rows = CHANGELOG.map(entry =>
+      `<div class="info-row"><div class="info-row-title">${escapeHtml(entry.version)}</div><div class="info-row-sub">${escapeHtml(entry.notes)}</div></div>`
+    ).join('');
+    showInfoModal('Version History', rows);
+  });
+}
+
 setActiveScope('area');
 
 loadData();
 </script>
+
+<div id="infoModalOverlay">
+  <div id="infoModalBox">
+    <div id="infoModalHeader">
+      <span id="infoModalTitle"></span>
+      <button id="infoModalClose">&#10005;</button>
+    </div>
+    <div id="infoModalBody"></div>
+  </div>
+</div>
 </body>
 </html>
