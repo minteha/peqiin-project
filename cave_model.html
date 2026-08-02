@@ -34,11 +34,11 @@
   #statusNote { font-size: 11.5px; color: var(--muted); }
 
   #controls .label { font-size: 11px; color: var(--muted); letter-spacing: 0.03em; margin: 0 2px 0 4px; }
-  #resetLocationBtn {
+  #resetLocationBtn, #selectAllLocationBtn {
     font-size: 11px; padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border);
     background: transparent; color: var(--muted); cursor: pointer; flex-shrink: 0; align-self: flex-start;
   }
-  #resetLocationBtn:hover { color: var(--text); }
+  #resetLocationBtn:hover, #selectAllLocationBtn:hover { color: var(--text); }
   #locationSubfilterBar {
     padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
     max-height: 130px; overflow-y: auto;
@@ -94,13 +94,13 @@
   }
 
   #main { flex: 1; display: flex; min-height: 0; }
-  #stage { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 10px; background: #efece4; min-height: 0; }
+  #stage { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 0; background: #efece4; min-height: 0; }
   #stage svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }
   #tableView { flex: 1; overflow: auto; padding: 20px; display: none; }
   #tableView.visible { display: block; }
   #stage.hidden-view { display: none; }
 
-  #sidebar { width: 340px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--panel); padding: 18px; overflow-y: auto; }
+  #sidebar { width: 420px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--panel); padding: 14px 16px; overflow-y: auto; height: 100%; }
   #sidebar h2 { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
   .type-tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 8px; margin-bottom: 12px; }
   .type-area { background: rgba(185,138,74,0.2); color: var(--accent); border: 1px solid var(--accent); }
@@ -184,10 +184,10 @@
 
 <div id="locationSubfilterBar">
   <div class="subfilter-pills" id="areaSubPills">
-    <button type="button" class="sub-pill active" data-scope="area" data-value="I">Area I</button>
-    <button type="button" class="sub-pill active" data-scope="area" data-value="II">Area II</button>
-    <button type="button" class="sub-pill active" data-scope="area" data-value="III">Area III</button>
-    <button type="button" class="sub-pill active" data-scope="area" data-value="VII">Area VII</button>
+    <button type="button" class="sub-pill" data-scope="area" data-value="I">Area I</button>
+    <button type="button" class="sub-pill" data-scope="area" data-value="II">Area II</button>
+    <button type="button" class="sub-pill" data-scope="area" data-value="III">Area III</button>
+    <button type="button" class="sub-pill" data-scope="area" data-value="VII">Area VII</button>
   </div>
   <div class="subfilter-pills" id="lociSubPills" style="display:none;">
     <span class="subfilter-loading">Loading&hellip;</span>
@@ -195,6 +195,7 @@
   <div class="subfilter-pills" id="sectionSubPills" style="display:none;">
     <span class="subfilter-loading">Loading&hellip;</span>
   </div>
+  <button id="selectAllLocationBtn">Select All</button>
   <button id="resetLocationBtn">Reset</button>
 </div>
 
@@ -221,7 +222,7 @@
 
 <div id="main">
   <div id="stage">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:ns1="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" version="1.1" id="svg1" width="3508" height="2480" viewBox="0 0 3508 2480" ns1:docname="cave with locus.svg" inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:ns1="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" version="1.1" id="svg1" width="3402.9" height="1957.9" viewBox="4.4 271.2 3402.9 1957.9" ns1:docname="cave with locus.svg" inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)">
   <defs id="defs1">
     <linearGradient id="linearGradient20" inkscape:collect="always">
       <stop style="stop-color:#de8787;stop-opacity:1;" offset="0" id="stop20" />
@@ -930,11 +931,11 @@ function renderFindIcons() {
     const locusEl = document.getElementById(svgId);
     if (!locusEl) return;
     const locusArea = (lociData[locusId] || {}).area_id;
-    // Only the currently active scope actually narrows the finds shown --
-    // e.g. while viewing by Section, individual locus/area selections don't apply.
+    // If nothing is selected in the current scope, show everything (matching
+    // material filter only). Once something IS selected, narrow to just that.
     let inScope = true;
-    if (activeScope === 'area') inScope = !locusArea || activeAreas.has(locusArea);
-    else if (activeScope === 'loci') inScope = activeLoci.size === 0 || activeLoci.has(locusId);
+    if (activeScope === 'area' && selectedAreas.size > 0) inScope = locusArea && selectedAreas.has(locusArea);
+    else if (activeScope === 'loci' && selectedLoci.size > 0) inScope = selectedLoci.has(locusId);
     const finds = findsData[locusId].filter(f => activeMaterials.has(f.artifact_category) && inScope);
     if (!finds.length) return;
 
@@ -1004,12 +1005,14 @@ function updateMaterialResultNote() {
   const note = document.getElementById('materialResultNote');
   let inScope = allFinds;
   let scopeNote = '';
-  if (activeScope === 'area' && activeAreas.size < 4) {
-    inScope = allFinds.filter(f => !f.area_id || activeAreas.has(f.area_id));
-    scopeNote = ` (within Area ${[...activeAreas].join('/')})`;
-  } else if (activeScope === 'loci' && activeLoci.size > 0 && activeLoci.size < Object.keys(lociData).length) {
-    inScope = allFinds.filter(f => activeLoci.has(f.locus_id));
+  if (activeScope === 'area' && selectedAreas.size > 0) {
+    inScope = allFinds.filter(f => f.area_id && selectedAreas.has(f.area_id));
+    scopeNote = ` (within selected areas)`;
+  } else if (activeScope === 'loci' && selectedLoci.size > 0) {
+    inScope = allFinds.filter(f => selectedLoci.has(f.locus_id));
     scopeNote = ` (within selected loci)`;
+  } else if (activeScope === 'section' && selectedSections.size > 0) {
+    scopeNote = ` (within selected sections)`;
   }
   const totalActive = inScope.filter(f => activeMaterials.has(f.artifact_category)).length;
   if (activeMaterials.size === 0) {
@@ -1144,55 +1147,44 @@ function applyAreaColors() {
 // ---- exclusive selection -- picking one shows ONLY that layer type on the map    ----
 // ---- and reveals ONLY its own sub-filter pill list for narrowing further.        ----
 let activeScope = 'area';
-let activeAreas = new Set(['I', 'II', 'III', 'VII']);
-let activeLoci = new Set();
-let activeSections = new Set();
+// Selected sets now start EMPTY -- nothing highlighted by default. Visibility
+// of shapes in the active scope is unconditional (always shown); these sets
+// only control the yellow glow highlight and which finds' icons narrow down.
+let selectedAreas = new Set();
+let selectedLoci = new Set();
+let selectedSections = new Set();
 
 function populateLocationSubPills() {
   const lociContainer = document.getElementById('lociSubPills');
   const shapedLoci = Object.keys(lociData).filter(id => lociData[id].svg_element_id).sort();
-  activeLoci = new Set(shapedLoci);
   lociContainer.innerHTML = shapedLoci.map(id =>
-    `<button type="button" class="sub-pill active" data-scope="loci" data-value="${id}">${id}</button>`
+    `<button type="button" class="sub-pill" data-scope="loci" data-value="${id}">${id}</button>`
   ).join('') || '<span class="subfilter-loading">No loci with map shapes yet.</span>';
 
   const sectionContainer = document.getElementById('sectionSubPills');
-  activeSections = new Set(allSquares.map(sq => `${sq.area_id}|${sq.letter}`));
   sectionContainer.innerHTML = allSquares.map(sq =>
-    `<button type="button" class="sub-pill active" data-scope="section" data-value="${sq.area_id}|${sq.letter}">${sq.area_id}-${sq.letter}</button>`
+    `<button type="button" class="sub-pill" data-scope="section" data-value="${sq.area_id}|${sq.letter}">${sq.area_id}-${sq.letter}</button>`
   ).join('') || '<span class="subfilter-loading">No sections loaded yet.</span>';
 }
 
-function totalCountForScope(scope) {
-  if (scope === 'area') return 4;
-  if (scope === 'section') return allSquares.length;
-  if (scope === 'loci') return Object.keys(lociData).filter(id => lociData[id].svg_element_id).length;
-  return 0;
+function selectedSetForScope(scope) {
+  return scope === 'area' ? selectedAreas : scope === 'section' ? selectedSections : selectedLoci;
+}
+function allValuesForScope(scope) {
+  if (scope === 'area') return ['I', 'II', 'III', 'VII'];
+  if (scope === 'section') return allSquares.map(sq => `${sq.area_id}|${sq.letter}`);
+  return Object.keys(lociData).filter(id => lociData[id].svg_element_id);
 }
 
 function applyLocationSubfilters() {
-  const activeSet = activeScope === 'area' ? activeAreas : activeScope === 'section' ? activeSections : activeLoci;
-  // Only glow when actively narrowed to a genuine subset -- not the trivial
-  // "everything selected" default, matching how T.A.X.A.'s filter glow worked.
-  const isNarrowed = activeSet.size > 0 && activeSet.size < totalCountForScope(activeScope);
-
+  const selectedSet = selectedSetForScope(activeScope);
   svgRoot.querySelectorAll('.pq-area-shape, .pq-square-shape, .pq-locus-shape').forEach(el => {
-    let hidden = false, matches = false;
-    if (activeScope === 'area') {
-      const area = areaOfElement(el);
-      matches = area && activeAreas.has(area);
-      hidden = area && !matches;
-    } else if (activeScope === 'section') {
-      const key = squareKeyOfElement(el);
-      matches = key && activeSections.has(key);
-      hidden = key && !matches;
-    } else if (activeScope === 'loci') {
-      const locusId = locusIdFromSvgId(el.id);
-      matches = locusId && activeLoci.has(locusId);
-      hidden = locusId && !matches;
-    }
-    el.classList.toggle('area-scoped-hidden', !!hidden);
-    el.classList.toggle('pq-subfilter-glow', isNarrowed && matches && !hidden);
+    let matches = false;
+    if (activeScope === 'area') matches = selectedAreas.has(areaOfElement(el));
+    else if (activeScope === 'section') matches = selectedSections.has(squareKeyOfElement(el));
+    else if (activeScope === 'loci') matches = selectedLoci.has(locusIdFromSvgId(el.id));
+    el.classList.remove('area-scoped-hidden'); // nothing is ever hidden anymore -- always show the full scope
+    el.classList.toggle('pq-subfilter-glow', matches);
   });
   renderFindIcons();
   updateMaterialResultNote();
@@ -1214,29 +1206,75 @@ document.querySelectorAll('.location-pill').forEach(pill => {
   pill.addEventListener('click', () => setActiveScope(pill.dataset.scope));
 });
 
+function toggleSelection(scope, value) {
+  const targetSet = selectedSetForScope(scope);
+  if (targetSet.has(value)) targetSet.delete(value);
+  else targetSet.add(value);
+  document.querySelectorAll(`.sub-pill[data-scope="${scope}"][data-value="${value}"]`).forEach(p => p.classList.toggle('active', targetSet.has(value)));
+  applyLocationSubfilters();
+}
+
 // Delegated: handles the static Area pills AND the dynamically-built Loci/Section pills
 document.getElementById('locationSubfilterBar').addEventListener('click', (e) => {
   const pill = e.target.closest('.sub-pill');
   if (!pill) return;
-  const scope = pill.dataset.scope, value = pill.dataset.value;
-  const targetSet = scope === 'area' ? activeAreas : scope === 'loci' ? activeLoci : activeSections;
-  if (targetSet.has(value)) { targetSet.delete(value); pill.classList.remove('active'); }
-  else { targetSet.add(value); pill.classList.add('active'); }
-  applyLocationSubfilters();
+  toggleSelection(pill.dataset.scope, pill.dataset.value);
 });
 
-document.getElementById('resetLocationBtn').addEventListener('click', () => {
-  if (activeScope === 'area') activeAreas = new Set(['I', 'II', 'III', 'VII']);
-  else if (activeScope === 'loci') activeLoci = new Set(Object.keys(lociData).filter(id => lociData[id].svg_element_id));
-  else if (activeScope === 'section') activeSections = new Set(allSquares.map(sq => `${sq.area_id}|${sq.letter}`));
+document.getElementById('selectAllLocationBtn').addEventListener('click', () => {
+  const all = allValuesForScope(activeScope);
+  const targetSet = selectedSetForScope(activeScope);
+  targetSet.clear();
+  all.forEach(v => targetSet.add(v));
   document.querySelectorAll(`.sub-pill[data-scope="${activeScope}"]`).forEach(p => p.classList.add('active'));
   applyLocationSubfilters();
 });
 
-// Initial layer visibility matches the default scope ('area')
-setLayerVisibility('pq-area-shape', true);
-setLayerVisibility('pq-square-shape', false);
-setLayerVisibility('pq-locus-shape', false);
+document.getElementById('resetLocationBtn').addEventListener('click', () => {
+  selectedSetForScope(activeScope).clear();
+  document.querySelectorAll(`.sub-pill[data-scope="${activeScope}"]`).forEach(p => p.classList.remove('active'));
+  applyLocationSubfilters();
+});
+
+// ---- Map click-to-select: middle-click OR Ctrl+click toggles the clicked   ----
+// ---- shape's membership in the current scope's selection (same as clicking ----
+// ---- its sub-filter pill), while still updating the detail panel too.      ----
+// classify() returns 'area'/'square'/'locus'; activeScope uses 'area'/'section'/'loci'.
+// These are different vocabularies -- comparing them directly (as before) silently
+// failed for Section and Loci (only 'area' happened to match both by coincidence),
+// which is exactly why ctrl+click/middle-click selection wasn't working for those two.
+const SCOPE_TO_KIND = { area: 'area', section: 'square', loci: 'locus' };
+
+function findScopeShapeFromEvent(e) {
+  let el = e.target;
+  const wantedKind = SCOPE_TO_KIND[activeScope];
+  while (el && el !== svgRoot) {
+    if (classify(el.id) === wantedKind) return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+function scopeValueForShape(scope, el) {
+  if (scope === 'area') return areaOfElement(el);
+  if (scope === 'section') return squareKeyOfElement(el);
+  if (scope === 'loci') return locusIdFromSvgId(el.id);
+  return null;
+}
+document.getElementById('stage').addEventListener('auxclick', (e) => {
+  if (e.button !== 1) return; // middle-click only
+  e.preventDefault();
+  const el = findScopeShapeFromEvent(e);
+  if (!el) return;
+  const value = scopeValueForShape(activeScope, el);
+  if (value) { toggleSelection(activeScope, value); selectElement(el, SCOPE_TO_KIND[activeScope]); }
+});
+document.getElementById('stage').addEventListener('click', (e) => {
+  if (!e.ctrlKey) return;
+  const el = findScopeShapeFromEvent(e);
+  if (!el) return;
+  const value = scopeValueForShape(activeScope, el);
+  if (value) { toggleSelection(activeScope, value); selectElement(el, SCOPE_TO_KIND[activeScope]); }
+}, true); // capture phase, so this runs before the normal click-for-details handler and can coexist
 
 // ---- View toggle: Map vs Table ----
 document.getElementById('mapViewBtn').addEventListener('click', () => {
