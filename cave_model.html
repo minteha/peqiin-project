@@ -1079,8 +1079,35 @@ function selectElement(el, kind) {
       </div>`;
     });
     if (!finds.length) html += `<div class="field-value" style="color:var(--muted); font-size:12px;">No finds recorded here yet.</div>`;
+  } else if (kind === 'area') {
+    // Show aggregate data for whatever is CURRENTLY selected, not just this one click --
+    // if nothing's selected yet, preview this single area; once selection exists, always
+    // reflect the full selection (so ctrl/middle-clicking more areas keeps this in sync).
+    const areaIds = selectedAreas.size > 0 ? [...selectedAreas] : [areaOfElement(el)];
+    renderAreaAggregatePanel(areaIds);
+    return;
   } else {
     html += `<h2>${escapeHtml(id)}</h2><div class="field-value" style="color:var(--muted);">Click a locus to see linked finds.</div>`;
+  }
+  document.getElementById('panelContent').innerHTML = html;
+}
+
+function renderAreaAggregatePanel(areaIds) {
+  const finds = allFinds.filter(f => f.area_id && areaIds.includes(f.area_id));
+  const title = areaIds.map(a => `Pq_cave_area_${a}`).join(' + ');
+  let html = `<span class="type-tag type-area">Area</span><h2>${escapeHtml(title)}</h2>`;
+  html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
+  if (finds.length) {
+    finds.forEach(f => {
+      const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
+      html += `<div class="find-card" onclick="selectFind(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+        <div class="find-title">${style.emoji} ${escapeHtml(f.artifact_category)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
+        <div class="find-meta">Locus ${escapeHtml(f.locus_id)} &middot; Reg. ${escapeHtml(f.reg_no || '?')}</div>
+        <span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>
+      </div>`;
+    });
+  } else {
+    html += `<div class="field-value" style="color:var(--muted); font-size:12px;">No data has been entered yet.</div>`;
   }
   document.getElementById('panelContent').innerHTML = html;
 }
@@ -1188,6 +1215,10 @@ function applyLocationSubfilters() {
   });
   renderFindIcons();
   updateMaterialResultNote();
+  // Keep the detail panel live-synced with the current selection whenever it's
+  // showing area data -- so pill clicks, Select All, Reset, and map ctrl/middle-clicks
+  // all update it consistently, not just a fresh single click.
+  if (activeScope === 'area' && selectedAreas.size > 0) renderAreaAggregatePanel([...selectedAreas]);
 }
 
 function setActiveScope(scope) {
@@ -1268,13 +1299,24 @@ document.getElementById('stage').addEventListener('auxclick', (e) => {
   const value = scopeValueForShape(activeScope, el);
   if (value) { toggleSelection(activeScope, value); selectElement(el, SCOPE_TO_KIND[activeScope]); }
 });
-document.getElementById('stage').addEventListener('click', (e) => {
-  if (!e.ctrlKey) return;
+function handleScopeToggleClick(e) {
   const el = findScopeShapeFromEvent(e);
   if (!el) return;
   const value = scopeValueForShape(activeScope, el);
   if (value) { toggleSelection(activeScope, value); selectElement(el, SCOPE_TO_KIND[activeScope]); }
+}
+document.getElementById('stage').addEventListener('click', (e) => {
+  if (!e.ctrlKey) return;
+  handleScopeToggleClick(e);
 }, true); // capture phase, so this runs before the normal click-for-details handler and can coexist
+// On macOS, Ctrl+click is very often intercepted as a right-click (firing
+// 'contextmenu' instead of 'click') -- this catches that case too, and
+// suppresses the menu, so Ctrl+click works reliably cross-platform.
+document.getElementById('stage').addEventListener('contextmenu', (e) => {
+  if (!e.ctrlKey) return; // a genuine right-click (no ctrl) still shows the normal menu
+  e.preventDefault();
+  handleScopeToggleClick(e);
+});
 
 // ---- View toggle: Map vs Table ----
 document.getElementById('mapViewBtn').addEventListener('click', () => {
