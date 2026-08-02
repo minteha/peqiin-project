@@ -34,11 +34,11 @@
   #statusNote { font-size: 11.5px; color: var(--muted); }
 
   #controls .label { font-size: 11px; color: var(--muted); letter-spacing: 0.03em; margin: 0 2px 0 4px; }
-  #resetLocationBtn, #selectAllLocationBtn {
-    font-size: 11px; padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted); cursor: pointer; flex-shrink: 0; align-self: flex-start;
+  .reset-btn, .select-all-btn {
+    font-size: 11px; padding: 4px 11px; border-radius: 14px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; flex-shrink: 0; margin-left: 4px;
   }
-  #resetLocationBtn:hover, #selectAllLocationBtn:hover { color: var(--text); }
+  .reset-btn:hover, .select-all-btn:hover { color: var(--text); }
   #locationSubfilterBar {
     padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
     max-height: 130px; overflow-y: auto;
@@ -65,6 +65,8 @@
     font-size: 11px; padding: 4px 9px; border-radius: 12px; border: 1px solid var(--border);
     background: #1b1a17; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap;
   }
+  .sub-pill::before { content: "\2717 "; opacity: 0.6; } /* ✗ X mark for unselected */
+  .sub-pill.active::before { content: "\2713 "; opacity: 1; } /* ✓ checkmark for selected */
   .sub-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
   .reset-btn {
     font-size: 11px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);
@@ -188,15 +190,19 @@
     <button type="button" class="sub-pill" data-scope="area" data-value="II">Area II</button>
     <button type="button" class="sub-pill" data-scope="area" data-value="III">Area III</button>
     <button type="button" class="sub-pill" data-scope="area" data-value="VII">Area VII</button>
+    <button type="button" class="select-all-btn">Select All</button>
+    <button type="button" class="reset-btn">Reset</button>
   </div>
   <div class="subfilter-pills" id="lociSubPills" style="display:none;">
     <span class="subfilter-loading">Loading&hellip;</span>
+    <button type="button" class="select-all-btn">Select All</button>
+    <button type="button" class="reset-btn">Reset</button>
   </div>
   <div class="subfilter-pills" id="sectionSubPills" style="display:none;">
     <span class="subfilter-loading">Loading&hellip;</span>
+    <button type="button" class="select-all-btn">Select All</button>
+    <button type="button" class="reset-btn">Reset</button>
   </div>
-  <button id="selectAllLocationBtn">Select All</button>
-  <button id="resetLocationBtn">Reset</button>
 </div>
 
 <div id="materialFilterBar">
@@ -832,6 +838,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 const svgRoot = document.querySelector('#stage svg');
 const svgNS = 'http://www.w3.org/2000/svg';
+const MODEL_VERSION = 'v1.6';  // bump this on each meaningful update, so it's easy to confirm which deploy is actually live
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
@@ -911,6 +918,7 @@ async function loadData() {
   if (loci) parts.push(`${loci.length} loci`); else parts.push('loci: FAILED to load');
   if (squares) parts.push(`${squares.length} squares`); else parts.push('squares: FAILED to load');
   if (fl) parts.push(`${allFinds.length} find-locus links`); else parts.push('find-locus: FAILED to load');
+  parts.push(MODEL_VERSION);
   document.getElementById('statusNote').textContent = parts.join(' \u00b7 ');
 
   populateLocationSubPills();
@@ -1196,17 +1204,19 @@ let selectedAreas = new Set();
 let selectedLoci = new Set();
 let selectedSections = new Set();
 
+const SUBFILTER_BUTTONS = '<button type="button" class="select-all-btn">Select All</button><button type="button" class="reset-btn">Reset</button>';
+
 function populateLocationSubPills() {
   const lociContainer = document.getElementById('lociSubPills');
   const shapedLoci = Object.keys(lociData).filter(id => lociData[id].svg_element_id).sort();
-  lociContainer.innerHTML = shapedLoci.map(id =>
+  lociContainer.innerHTML = (shapedLoci.map(id =>
     `<button type="button" class="sub-pill" data-scope="loci" data-value="${id}">${id}</button>`
-  ).join('') || '<span class="subfilter-loading">No loci with map shapes yet.</span>';
+  ).join('') || '<span class="subfilter-loading">No loci with map shapes yet.</span>') + SUBFILTER_BUTTONS;
 
   const sectionContainer = document.getElementById('sectionSubPills');
-  sectionContainer.innerHTML = allSquares.map(sq =>
+  sectionContainer.innerHTML = (allSquares.map(sq =>
     `<button type="button" class="sub-pill" data-scope="section" data-value="${sq.area_id}|${sq.letter}">${sq.area_id}-${sq.letter}</button>`
-  ).join('') || '<span class="subfilter-loading">No sections loaded yet.</span>';
+  ).join('') || '<span class="subfilter-loading">No sections loaded yet.</span>') + SUBFILTER_BUTTONS;
 }
 
 function selectedSetForScope(scope) {
@@ -1267,19 +1277,22 @@ document.getElementById('locationSubfilterBar').addEventListener('click', (e) =>
   toggleSelection(pill.dataset.scope, pill.dataset.value);
 });
 
-document.getElementById('selectAllLocationBtn').addEventListener('click', () => {
-  const all = allValuesForScope(activeScope);
-  const targetSet = selectedSetForScope(activeScope);
-  targetSet.clear();
-  all.forEach(v => targetSet.add(v));
-  document.querySelectorAll(`.sub-pill[data-scope="${activeScope}"]`).forEach(p => p.classList.add('active'));
-  applyLocationSubfilters();
-});
-
-document.getElementById('resetLocationBtn').addEventListener('click', () => {
-  selectedSetForScope(activeScope).clear();
-  document.querySelectorAll(`.sub-pill[data-scope="${activeScope}"]`).forEach(p => p.classList.remove('active'));
-  applyLocationSubfilters();
+// Delegated (there are 3 copies of each button now, one per scope's pill list --
+// only one is ever visible at a time, but a class-based delegated listener
+// handles all of them without needing unique IDs per scope).
+document.getElementById('locationSubfilterBar').addEventListener('click', (e) => {
+  if (e.target.closest('.select-all-btn')) {
+    const all = allValuesForScope(activeScope);
+    const targetSet = selectedSetForScope(activeScope);
+    targetSet.clear();
+    all.forEach(v => targetSet.add(v));
+    document.querySelectorAll(`.sub-pill[data-scope="${activeScope}"]`).forEach(p => p.classList.add('active'));
+    applyLocationSubfilters();
+  } else if (e.target.closest('.reset-btn')) {
+    selectedSetForScope(activeScope).clear();
+    document.querySelectorAll(`.sub-pill[data-scope="${activeScope}"]`).forEach(p => p.classList.remove('active'));
+    applyLocationSubfilters();
+  }
 });
 
 // ---- Map click-to-select: middle-click OR Ctrl+click toggles the clicked   ----
@@ -1439,6 +1452,11 @@ function renderTable() {
     </tr>`;
   }).join('');
 }
+
+// Initialize layer visibility to match the default active scope ('area') --
+// this was dropped during an earlier refactor, which is exactly why everything
+// stayed clickable on first load even though the Area pill showed as active.
+setActiveScope('area');
 
 loadData();
 </script>
