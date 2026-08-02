@@ -65,8 +65,6 @@
     font-size: 11px; padding: 4px 9px; border-radius: 12px; border: 1px solid var(--border);
     background: #1b1a17; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap;
   }
-  .sub-pill::before { content: "\2717 "; opacity: 0.6; } /* ✗ X mark for unselected */
-  .sub-pill.active::before { content: "\2713 "; opacity: 1; } /* ✓ checkmark for selected */
   .sub-pill.active { border-color: var(--accent); color: var(--text); background: rgba(185,138,74,0.18); }
   .reset-btn {
     font-size: 11px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);
@@ -190,8 +188,8 @@
     <button type="button" class="sub-pill" data-scope="area" data-value="II">Area II</button>
     <button type="button" class="sub-pill" data-scope="area" data-value="III">Area III</button>
     <button type="button" class="sub-pill" data-scope="area" data-value="VII">Area VII</button>
-    <button type="button" class="select-all-btn">Select All</button>
-    <button type="button" class="reset-btn">Reset</button>
+    <button type="button" class="select-all-btn">&#9989; Select All</button>
+    <button type="button" class="reset-btn">&#10060; Reset</button>
   </div>
   <div class="subfilter-pills" id="lociSubPills" style="display:none;">
     <span class="subfilter-loading">Loading&hellip;</span>
@@ -1050,17 +1048,14 @@ document.getElementById('stage').addEventListener('click', (e) => {
   while (el && el !== svgRoot) {
     const kind = classify(el.id);
     if (kind) {
-      // For areas specifically, a plain click ALSO adds it to the selection
-      // (not just a preview) -- so clicking Area VII then Area II on the map
-      // actually accumulates both, matching how the sub-filter pills behave,
-      // rather than each click just replacing the previous single preview.
-      if (kind === 'area' && !e.ctrlKey) {
-        const areaVal = areaOfElement(el);
-        if (areaVal && !selectedAreas.has(areaVal)) {
-          selectedAreas.add(areaVal);
-          document.querySelectorAll(`.sub-pill[data-scope="area"][data-value="${areaVal}"]`).forEach(p => p.classList.add('active'));
-          el.classList.add('pq-subfilter-glow');
-        }
+      // For areas and squares, a plain click TOGGLES membership in the selection
+      // (add if not selected, remove if already selected) -- same as ctrl/middle-click
+      // and the sub-filter pills, so clicking the same area/square again genuinely
+      // undoes it, on the map, in the sub-filter, AND in the detail panel.
+      if ((kind === 'area' || kind === 'square') && !e.ctrlKey) {
+        const scope = kind === 'area' ? 'area' : 'section';
+        const value = kind === 'area' ? areaOfElement(el) : squareKeyOfElement(el);
+        if (value) { toggleSelection(scope, value); return; }
       }
       selectElement(el, kind);
       return;
@@ -1109,6 +1104,11 @@ function selectElement(el, kind) {
     const areaIds = selectedAreas.size > 0 ? [...selectedAreas] : [areaOfElement(el)];
     renderAreaAggregatePanel(areaIds);
     return;
+  } else if (kind === 'square') {
+    const key = squareKeyOfElement(el);
+    const keys = selectedSections.size > 0 ? [...selectedSections] : [key];
+    renderSectionAggregatePanel(keys);
+    return;
   } else {
     html += `<h2>${escapeHtml(id)}</h2><div class="field-value" style="color:var(--muted);">Click a locus to see linked finds.</div>`;
   }
@@ -1119,6 +1119,33 @@ function renderAreaAggregatePanel(areaIds) {
   const finds = allFinds.filter(f => f.area_id && areaIds.includes(f.area_id));
   const title = areaIds.map(a => `Pq_cave_area_${a}`).join(' + ');
   let html = `<span class="type-tag type-area">Area</span><h2>${escapeHtml(title)}</h2>`;
+  html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
+  if (finds.length) {
+    finds.forEach(f => {
+      const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
+      html += `<div class="find-card" onclick="selectFind(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+        <div class="find-title">${style.emoji} ${escapeHtml(f.artifact_category)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
+        <div class="find-meta">Locus ${escapeHtml(f.locus_id)} &middot; Reg. ${escapeHtml(f.reg_no || '?')}</div>
+        <span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>
+      </div>`;
+    });
+  } else {
+    html += `<div class="field-value" style="color:var(--muted); font-size:12px;">No data has been entered yet.</div>`;
+  }
+  document.getElementById('panelContent').innerHTML = html;
+}
+
+function findMatchesSquareKey(f, squareKey) {
+  const [area, letter] = squareKey.split('|');
+  if (f.area_id !== area) return false;
+  const tokens = (f.section || '').split(',').map(s => s.trim().replace(/^(northern|southern|eastern|western|se corner of|west balk|\+ sides of)\s*/i, ''));
+  return tokens.includes(letter);
+}
+
+function renderSectionAggregatePanel(squareKeys) {
+  const finds = allFinds.filter(f => squareKeys.some(key => findMatchesSquareKey(f, key)));
+  const title = squareKeys.map(k => `Pq_cave_area_${k.split('|')[0]}_${k.split('|')[1]}`).join(' + ');
+  let html = `<span class="type-tag type-square">Section</span><h2>${escapeHtml(title)}</h2>`;
   html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
   if (finds.length) {
     finds.forEach(f => {
@@ -1204,7 +1231,7 @@ let selectedAreas = new Set();
 let selectedLoci = new Set();
 let selectedSections = new Set();
 
-const SUBFILTER_BUTTONS = '<button type="button" class="select-all-btn">Select All</button><button type="button" class="reset-btn">Reset</button>';
+const SUBFILTER_BUTTONS = '<button type="button" class="select-all-btn">\u2705 Select All</button><button type="button" class="reset-btn">\u274c Reset</button>';
 
 function populateLocationSubPills() {
   const lociContainer = document.getElementById('lociSubPills');
@@ -1240,10 +1267,17 @@ function applyLocationSubfilters() {
   });
   renderFindIcons();
   updateMaterialResultNote();
-  // Keep the detail panel live-synced with the current selection whenever it's
-  // showing area data -- so pill clicks, Select All, Reset, and map ctrl/middle-clicks
-  // all update it consistently, not just a fresh single click.
-  if (activeScope === 'area' && selectedAreas.size > 0) renderAreaAggregatePanel([...selectedAreas]);
+  // Keep the detail panel live-synced with the current selection, for BOTH area
+  // and section scopes -- so pill clicks, Select All, Reset, and map ctrl/middle/
+  // plain-clicks all update it consistently, including the case where toggling
+  // off the last selected item brings the selection back to empty.
+  if (activeScope === 'area') {
+    if (selectedAreas.size > 0) renderAreaAggregatePanel([...selectedAreas]);
+    else document.getElementById('panelContent').innerHTML = '<div class="empty-state">Click an area (or select one below) to see its data.</div>';
+  } else if (activeScope === 'section') {
+    if (selectedSections.size > 0) renderSectionAggregatePanel([...selectedSections]);
+    else document.getElementById('panelContent').innerHTML = '<div class="empty-state">Click a section (or select one below) to see its data.</div>';
+  }
 }
 
 function setActiveScope(scope) {
