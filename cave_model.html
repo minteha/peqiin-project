@@ -1041,7 +1041,22 @@ document.getElementById('stage').addEventListener('click', (e) => {
   let el = e.target;
   while (el && el !== svgRoot) {
     const kind = classify(el.id);
-    if (kind) { selectElement(el, kind); return; }
+    if (kind) {
+      // For areas specifically, a plain click ALSO adds it to the selection
+      // (not just a preview) -- so clicking Area VII then Area II on the map
+      // actually accumulates both, matching how the sub-filter pills behave,
+      // rather than each click just replacing the previous single preview.
+      if (kind === 'area' && !e.ctrlKey) {
+        const areaVal = areaOfElement(el);
+        if (areaVal && !selectedAreas.has(areaVal)) {
+          selectedAreas.add(areaVal);
+          document.querySelectorAll(`.sub-pill[data-scope="area"][data-value="${areaVal}"]`).forEach(p => p.classList.add('active'));
+          el.classList.add('pq-subfilter-glow');
+        }
+      }
+      selectElement(el, kind);
+      return;
+    }
     el = el.parentElement;
   }
 });
