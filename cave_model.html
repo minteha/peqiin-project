@@ -842,7 +842,7 @@ const svgNS = 'http://www.w3.org/2000/svg';
 //   patch -- a bug fix or small tweak (e.g. emoji placement, toggle-undo fix)
 // This batch: 3 patches since v1.6 (emoji moved to buttons, plain-click undo
 // fixed, section aggregate panel added) -> 1.7.3
-const MODEL_VERSION = 'v1.7.3';
+const MODEL_VERSION = 'v1.8.0';  // minor bump: loci now has the same aggregate-selection feature as area/section
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
@@ -1054,13 +1054,13 @@ document.getElementById('stage').addEventListener('click', (e) => {
   while (el && el !== svgRoot) {
     const kind = classify(el.id);
     if (kind) {
-      // For areas and squares, a plain click TOGGLES membership in the selection
-      // (add if not selected, remove if already selected) -- same as ctrl/middle-click
-      // and the sub-filter pills, so clicking the same area/square again genuinely
-      // undoes it, on the map, in the sub-filter, AND in the detail panel.
-      if ((kind === 'area' || kind === 'square') && !e.ctrlKey) {
-        const scope = kind === 'area' ? 'area' : 'section';
-        const value = kind === 'area' ? areaOfElement(el) : squareKeyOfElement(el);
+      // For areas, squares, AND loci, a plain click TOGGLES membership in the
+      // selection (add if not selected, remove if already selected) -- same as
+      // ctrl/middle-click and the sub-filter pills, so clicking the same shape
+      // again genuinely undoes it, on the map, in the sub-filter, AND in the panel.
+      if ((kind === 'area' || kind === 'square' || kind === 'locus') && !e.ctrlKey) {
+        const scope = kind === 'area' ? 'area' : kind === 'square' ? 'section' : 'loci';
+        const value = kind === 'area' ? areaOfElement(el) : kind === 'square' ? squareKeyOfElement(el) : locusIdFromSvgId(el.id);
         if (value) { toggleSelection(scope, value); return; }
       }
       selectElement(el, kind);
@@ -1083,26 +1083,9 @@ function selectElement(el, kind) {
 
   if (kind === 'locus') {
     const locusId = locusIdFromSvgId(id);
-    const locus = lociData[locusId];
-    const finds = findsData[locusId] || [];
-    html += `<h2>${locusId}</h2>`;
-    if (locus) {
-      html += `<div class="field"><div class="field-label">Area</div><div class="field-value">${escapeHtml(locus.area_id)}</div></div>`;
-      html += `<div class="field"><div class="field-label">Phase</div><div class="field-value">${escapeHtml(locus.phase || 'not stated')}</div></div>`;
-      if (locus.boundary_certainty === 'approximate') html += `<div class="field"><div class="field-value" style="color:#e0c15c;">\u26a0 Approximate boundary</div></div>`;
-      if (locus.description) html += `<div class="field"><div class="field-label">Description</div><div class="field-value">${escapeHtml(locus.description)}</div></div>`;
-      if (locus.squares) html += `<div class="field"><div class="field-label">Made by squares</div><div class="field-value">${escapeHtml(locus.squares)}</div></div>`;
-    }
-    html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
-    finds.forEach(f => {
-      const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
-      html += `<div class="find-card" onclick="selectFind(${JSON.stringify(f).replace(/"/g,'&quot;')})">
-        <div class="find-title">${style.emoji} ${escapeHtml(f.artifact_category)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
-        <div class="find-meta">Reg. ${escapeHtml(f.reg_no || '?')}</div>
-        <span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>
-      </div>`;
-    });
-    if (!finds.length) html += `<div class="field-value" style="color:var(--muted); font-size:12px;">No finds recorded here yet.</div>`;
+    const locusIds = selectedLoci.size > 0 ? [...selectedLoci] : [locusId];
+    renderLociAggregatePanel(locusIds);
+    return;
   } else if (kind === 'area') {
     // Show aggregate data for whatever is CURRENTLY selected, not just this one click --
     // if nothing's selected yet, preview this single area; once selection exists, always
@@ -1152,6 +1135,36 @@ function renderSectionAggregatePanel(squareKeys) {
   const finds = allFinds.filter(f => squareKeys.some(key => findMatchesSquareKey(f, key)));
   const title = squareKeys.map(k => `Pq_cave_area_${k.split('|')[0]}_${k.split('|')[1]}`).join(' + ');
   let html = `<span class="type-tag type-square">Section</span><h2>${escapeHtml(title)}</h2>`;
+  html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
+  if (finds.length) {
+    finds.forEach(f => {
+      const style = CATEGORY_STYLE[f.artifact_category] || CATEGORY_STYLE.misc;
+      html += `<div class="find-card" onclick="selectFind(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+        <div class="find-title">${style.emoji} ${escapeHtml(f.artifact_category)}${f.subtype ? ' &middot; ' + escapeHtml(f.subtype) : ''}</div>
+        <div class="find-meta">Locus ${escapeHtml(f.locus_id)} &middot; Reg. ${escapeHtml(f.reg_no || '?')}</div>
+        <span class="certainty-tag certainty-${f.certainty}">${escapeHtml(f.certainty).replace('_',' ')}</span>
+      </div>`;
+    });
+  } else {
+    html += `<div class="field-value" style="color:var(--muted); font-size:12px;">No data has been entered yet.</div>`;
+  }
+  document.getElementById('panelContent').innerHTML = html;
+}
+
+function renderLociAggregatePanel(locusIds) {
+  const title = locusIds.join(' + ');
+  let html = `<span class="type-tag type-locus">Locus</span><h2>${escapeHtml(title)}</h2>`;
+  locusIds.forEach(locusId => {
+    const locus = lociData[locusId];
+    if (!locus) return;
+    html += `<div class="field" style="margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);">`;
+    html += `<div class="field-label">${escapeHtml(locusId)} \u2014 Area ${escapeHtml(locus.area_id)}, Phase ${escapeHtml(locus.phase || 'not stated')}</div>`;
+    if (locus.boundary_certainty === 'approximate') html += `<div class="field-value" style="color:#e0c15c; font-size:12px;">\u26a0 Approximate boundary</div>`;
+    if (locus.description) html += `<div class="field-value" style="font-size:12px;">${escapeHtml(locus.description)}</div>`;
+    if (locus.squares) html += `<div class="field-value" style="font-size:11px; color:var(--muted);">Squares: ${escapeHtml(locus.squares)}</div>`;
+    html += `</div>`;
+  });
+  const finds = locusIds.flatMap(id => findsData[id] || []);
   html += `<div class="field"><div class="field-label">Finds (${finds.length})</div></div>`;
   if (finds.length) {
     finds.forEach(f => {
@@ -1283,6 +1296,9 @@ function applyLocationSubfilters() {
   } else if (activeScope === 'section') {
     if (selectedSections.size > 0) renderSectionAggregatePanel([...selectedSections]);
     else document.getElementById('panelContent').innerHTML = '<div class="empty-state">Click a section (or select one below) to see its data.</div>';
+  } else if (activeScope === 'loci') {
+    if (selectedLoci.size > 0) renderLociAggregatePanel([...selectedLoci]);
+    else document.getElementById('panelContent').innerHTML = '<div class="empty-state">Click a locus (or select one below) to see its data.</div>';
   }
 }
 
