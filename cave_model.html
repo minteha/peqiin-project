@@ -876,7 +876,7 @@ const svgNS = 'http://www.w3.org/2000/svg';
 //   patch -- a bug fix or small tweak (e.g. emoji placement, toggle-undo fix)
 // This batch: 3 patches since v1.6 (emoji moved to buttons, plain-click undo
 // fixed, section aggregate panel added) -> 1.7.3
-const MODEL_VERSION = 'v1.9.0';  // minor bump: category filter now defaults empty + Select All added; new clickable loci/squares/version info modals
+const MODEL_VERSION = 'v1.9.2';  // patches: fixed a broken script (modal HTML was placed after the closing script tag); plain click no longer toggles selection (Ctrl/middle-click only); squares modal now cross-references which loci reference each square
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
@@ -1095,15 +1095,8 @@ document.getElementById('stage').addEventListener('click', (e) => {
   while (el && el !== svgRoot) {
     const kind = classify(el.id);
     if (kind) {
-      // For areas, squares, AND loci, a plain click TOGGLES membership in the
-      // selection (add if not selected, remove if already selected) -- same as
-      // ctrl/middle-click and the sub-filter pills, so clicking the same shape
-      // again genuinely undoes it, on the map, in the sub-filter, AND in the panel.
-      if ((kind === 'area' || kind === 'square' || kind === 'locus') && !e.ctrlKey) {
-        const scope = kind === 'area' ? 'area' : kind === 'square' ? 'section' : 'loci';
-        const value = kind === 'area' ? areaOfElement(el) : kind === 'square' ? squareKeyOfElement(el) : locusIdFromSvgId(el.id);
-        if (value) { toggleSelection(scope, value); return; }
-      }
+      // Plain click only VIEWS (preview via selectElement's own selectedX-if-any-else-preview
+      // logic) -- toggling selection is exclusively via Ctrl+click or middle-click now.
       selectElement(el, kind);
       return;
     }
@@ -1565,7 +1558,21 @@ function renderTable() {
 // ---- alongside the research schema in Supabase.                                ----
 const SOURCE_CITATION = "Shalem, D., Gal, Z., & Smithline, H. (2013). Peqi'in: A Late Chalcolithic Burial Site, Upper Galilee, Israel. Ostracon.";
 
+// Squares themselves have no description of their own -- but cross-referencing
+// against each locus's own square list (reusing the same token-parsing pattern
+// already proven in the table's Section filter) gives useful real context using
+// data we already have, without needing anything new in the database.
+function lociForSquare(areaId, letter) {
+  return Object.keys(lociData).filter(locusId => {
+    const locus = lociData[locusId];
+    if (!locus || locus.area_id !== areaId || !locus.squares) return false;
+    const tokens = locus.squares.split(',').map(s => s.trim().replace(/^(northern|southern|eastern|western|se corner of|west balk|\+ sides of)\s*/i, ''));
+    return tokens.includes(letter);
+  }).sort();
+}
+
 const CHANGELOG = [
+  { version: 'v1.9.2', notes: 'Fixed a real bug: the info-modal HTML was placed after the closing script tag, so the script referencing it threw an error on load and halted everything after it (stuck loading, broken scope isolation). Plain click no longer toggles selection -- only Ctrl+click/middle-click do. Squares modal now shows which loci reference each square.' },
   { version: 'v1.9.0', notes: 'Category filter now starts empty (matching the location sub-filters) and has a Select All button. "N loci" / "N squares" / the version number are now clickable, opening a list with source citation -- and this changelog itself is the version popup.' },
   { version: 'v1.8.0', notes: 'Loci now get the same multi-select aggregate panel as Area and Section.' },
   { version: 'v1.7.3', notes: 'Fixed: Ctrl/middle-click deselecting the last selected item left the panel showing stale data. Moved Select All/Reset emoji onto the buttons themselves (not every pill). Added the section aggregate panel.' },
@@ -1599,9 +1606,13 @@ function attachStatLinkHandlers() {
   const squaresLink = document.getElementById('squaresStatLink');
   if (squaresLink) squaresLink.addEventListener('click', (e) => {
     e.preventDefault();
-    const rows = allSquares.map(sq =>
-      `<div class="info-row"><div class="info-row-title">${escapeHtml(sq.area_id)}-${escapeHtml(sq.letter)}</div></div>`
-    ).join('');
+    const rows = allSquares.map(sq => {
+      const containingLoci = lociForSquare(sq.area_id, sq.letter);
+      const lociNote = containingLoci.length
+        ? `<div class="info-row-sub">Within: ${containingLoci.map(escapeHtml).join(', ')}</div>`
+        : `<div class="info-row-sub">No locus currently references this square.</div>`;
+      return `<div class="info-row"><div class="info-row-title">${escapeHtml(sq.area_id)}-${escapeHtml(sq.letter)}</div>${lociNote}</div>`;
+    }).join('');
     showInfoModal(`All Sections (${allSquares.length})`, `<div class="info-citation">Source: ${escapeHtml(SOURCE_CITATION)}</div>${rows}`);
   });
 
