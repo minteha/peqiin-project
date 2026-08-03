@@ -876,7 +876,7 @@ const svgNS = 'http://www.w3.org/2000/svg';
 //   patch -- a bug fix or small tweak (e.g. emoji placement, toggle-undo fix)
 // This batch: 3 patches since v1.6 (emoji moved to buttons, plain-click undo
 // fixed, section aggregate panel added) -> 1.7.3
-const MODEL_VERSION = 'v1.9.2';  // patches: fixed a broken script (modal HTML was placed after the closing script tag); plain click no longer toggles selection (Ctrl/middle-click only); squares modal now cross-references which loci reference each square
+const MODEL_VERSION = 'v1.9.3';  // patch: plain click now selects (glow + sub-filter sync) instead of just previewing; Ctrl/middle-click still add to a multi-selection
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
@@ -1095,8 +1095,22 @@ document.getElementById('stage').addEventListener('click', (e) => {
   while (el && el !== svgRoot) {
     const kind = classify(el.id);
     if (kind) {
-      // Plain click only VIEWS (preview via selectElement's own selectedX-if-any-else-preview
-      // logic) -- toggling selection is exclusively via Ctrl+click or middle-click now.
+      // Plain click SELECTS just this one item -- clears any existing selection in
+      // this scope and sets it to only this one, with full glow + sub-filter sync
+      // (same visual treatment as Ctrl+click, just single instead of additive).
+      // Ctrl+click / middle-click ADD to the selection instead, for comparing several.
+      if (kind === 'area' || kind === 'square' || kind === 'locus') {
+        const scope = kind === 'area' ? 'area' : kind === 'square' ? 'section' : 'loci';
+        const value = kind === 'area' ? areaOfElement(el) : kind === 'square' ? squareKeyOfElement(el) : locusIdFromSvgId(el.id);
+        if (value) {
+          const targetSet = selectedSetForScope(scope);
+          targetSet.clear();
+          targetSet.add(value);
+          document.querySelectorAll(`.sub-pill[data-scope="${scope}"]`).forEach(p => p.classList.toggle('active', p.dataset.value === value));
+          applyLocationSubfilters();
+          return;
+        }
+      }
       selectElement(el, kind);
       return;
     }
@@ -1572,6 +1586,7 @@ function lociForSquare(areaId, letter) {
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.3', notes: 'Plain click on area/loci/square now selects (yellow glow + sub-filter pill highlight, replacing the previous single selection) instead of only previewing. Ctrl+click / middle-click remain the way to ADD to a multi-selection for comparing several at once. Now consistent across all three scopes.' },
   { version: 'v1.9.2', notes: 'Fixed a real bug: the info-modal HTML was placed after the closing script tag, so the script referencing it threw an error on load and halted everything after it (stuck loading, broken scope isolation). Plain click no longer toggles selection -- only Ctrl+click/middle-click do. Squares modal now shows which loci reference each square.' },
   { version: 'v1.9.0', notes: 'Category filter now starts empty (matching the location sub-filters) and has a Select All button. "N loci" / "N squares" / the version number are now clickable, opening a list with source citation -- and this changelog itself is the version popup.' },
   { version: 'v1.8.0', notes: 'Loci now get the same multi-select aggregate panel as Area and Section.' },
