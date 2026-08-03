@@ -62,6 +62,13 @@
     background: transparent; color: var(--muted); cursor: pointer; flex-shrink: 0; margin-left: 4px;
   }
   .reset-btn:hover, .select-all-btn:hover { color: var(--text); }
+  #categorySubfilterBar {
+    padding: 0 20px; flex-shrink: 0; max-height: 130px; overflow-y: auto;
+  }
+  #categorySubfilterBar:not(:empty) { padding: 8px 20px; border-bottom: 1px solid var(--border); }
+  .category-subfilter-row { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .category-subfilter-row:last-child { margin-bottom: 0; }
+  .category-subfilter-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; padding-top: 5px; flex-shrink: 0; }
   #locationSubfilterBar {
     padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
     max-height: 130px; overflow-y: auto;
@@ -117,13 +124,13 @@
   }
 
   #main { flex: 1; display: flex; min-height: 0; }
-  #stage { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 0; background: #efece4; min-height: 0; }
-  #stage svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }
+  #stage { flex: 0 0 auto; overflow: hidden; display: flex; align-items: center; justify-content: flex-start; padding: 0; background: #efece4; height: 100%; max-width: 70%; }
+  #stage svg { height: 100%; width: auto; display: block; }
   #tableView { flex: 1; overflow: auto; padding: 20px; display: none; }
   #tableView.visible { display: block; }
   #stage.hidden-view { display: none; }
 
-  #sidebar { width: 420px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--panel); padding: 14px 16px; overflow-y: auto; height: 100%; }
+  #sidebar { flex: 1; min-width: 420px; border-left: 1px solid var(--border); background: var(--panel); padding: 14px 16px; overflow-y: auto; height: 100%; }
   #sidebar h2 { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
   .type-tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 8px; margin-bottom: 12px; }
   .type-area { background: rgba(185,138,74,0.2); color: var(--accent); border: 1px solid var(--accent); }
@@ -246,6 +253,7 @@
   <button id="selectAllMaterialBtn">&#9989; Select All</button>
   <button id="clearMaterialBtn">&#10060; Reset</button>
 </div>
+<div id="categorySubfilterBar"></div>
 <div id="materialResultBar"><span id="materialResultNote"></span></div>
 
 <div id="main">
@@ -876,7 +884,7 @@ const svgNS = 'http://www.w3.org/2000/svg';
 //   patch -- a bug fix or small tweak (e.g. emoji placement, toggle-undo fix)
 // This batch: 3 patches since v1.6 (emoji moved to buttons, plain-click undo
 // fixed, section aggregate panel added) -> 1.7.3
-const MODEL_VERSION = 'v1.9.4';  // patch: fixed the plain-click handler running (and wiping out the multi-selection) even when Ctrl was held, since it wasn't checking e.ctrlKey
+const MODEL_VERSION = 'v1.10.0';  // minor: new category sub-filter (e.g. Ossuary -> Open/Female/Male/Zoomorphic) read live from the database, never a fixed table -- new subtypes appear automatically as they're added
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
@@ -961,6 +969,7 @@ async function loadData() {
   attachStatLinkHandlers();
 
   populateLocationSubPills();
+  renderCategorySubfilters();
   applyAreaColors();
   renderFindIcons();
   updateMaterialResultNote();
@@ -983,7 +992,7 @@ function renderFindIcons() {
     let inScope = true;
     if (activeScope === 'area' && selectedAreas.size > 0) inScope = locusArea && selectedAreas.has(locusArea);
     else if (activeScope === 'loci' && selectedLoci.size > 0) inScope = selectedLoci.has(locusId);
-    const finds = findsData[locusId].filter(f => activeMaterials.has(f.artifact_category) && inScope);
+    const finds = findsData[locusId].filter(f => activeMaterials.has(f.artifact_category) && matchesSubtypeFilter(f) && inScope);
     if (!finds.length) return;
 
     // Build a clip path from the locus's own shape(s), so icons never render outside its true boundary
@@ -1036,6 +1045,7 @@ document.querySelectorAll('.material-pill').forEach(pill => {
     const mat = pill.dataset.material;
     if (activeMaterials.has(mat)) { activeMaterials.delete(mat); pill.classList.remove('active'); }
     else { activeMaterials.add(mat); pill.classList.add('active'); }
+    renderCategorySubfilters();
     renderFindIcons();
     updateMaterialResultNote();
   });
@@ -1044,14 +1054,96 @@ document.querySelectorAll('.material-pill').forEach(pill => {
 document.getElementById('selectAllMaterialBtn').addEventListener('click', () => {
   Object.keys(CATEGORY_STYLE).forEach(m => activeMaterials.add(m));
   document.querySelectorAll('.material-pill').forEach(p => p.classList.add('active'));
+  renderCategorySubfilters();
   renderFindIcons();
   updateMaterialResultNote();
 });
 document.getElementById('clearMaterialBtn').addEventListener('click', () => {
   activeMaterials.clear();
   document.querySelectorAll('.material-pill').forEach(p => p.classList.remove('active'));
+  renderCategorySubfilters();
   renderFindIcons();
   updateMaterialResultNote();
+});
+
+// ---- Category sub-filter: read live from whatever data is actually loaded, ----
+// ---- never a fixed lookup table -- so a brand new subtype (e.g. a flint    ----
+// ---- tool type we've never seen before) appears automatically the moment  ----
+// ---- it exists in the database, with zero maintenance required.          ----
+// Keyed by category -> Set of selected sub-values. Starts empty for every category.
+const selectedSubtypes = {};
+function matchesSubtypeFilter(f) {
+  const set = selectedSubtypes[f.artifact_category];
+  if (!set || set.size === 0) return true; // no sub-filter active for this category -- everything passes
+  const field = f.artifact_category === 'ossuary' ? 'ossuary_category' : 'subtype';
+  return set.has(f[field]);
+}
+
+function subtypeSetFor(category) {
+  if (!selectedSubtypes[category]) selectedSubtypes[category] = new Set();
+  return selectedSubtypes[category];
+}
+function subvaluesForCategory(category) {
+  // Ossuaries group by their dedicated ossuary_category field (more meaningful
+  // than raw subtype codes like 'D1'/'F3'); everything else groups by subtype.
+  const field = category === 'ossuary' ? 'ossuary_category' : 'subtype';
+  const values = new Set();
+  allFinds.forEach(f => {
+    if (f.artifact_category === category && f[field]) values.add(f[field]);
+  });
+  return [...values].sort();
+}
+
+function renderCategorySubfilters() {
+  const bar = document.getElementById('categorySubfilterBar');
+  let html = '';
+  [...activeMaterials].sort().forEach(cat => {
+    const values = subvaluesForCategory(cat);
+    if (!values.length) return; // nothing to sub-filter yet for this category
+    const style = CATEGORY_STYLE[cat] || CATEGORY_STYLE.misc;
+    const pills = values.map(v => {
+      const active = subtypeSetFor(cat).has(v) ? ' active' : '';
+      return `<button type="button" class="sub-pill${active}" data-cat="${escapeHtml(cat)}" data-subvalue="${escapeHtml(v)}">${escapeHtml(v)}</button>`;
+    }).join('');
+    html += `<div class="category-subfilter-row">
+      <span class="category-subfilter-label">${style.emoji} ${escapeHtml(cat)}:</span>
+      ${pills}
+      <button type="button" class="select-all-btn" data-subselectall="${escapeHtml(cat)}">&#9989; Select All</button>
+      <button type="button" class="reset-btn" data-subreset="${escapeHtml(cat)}">&#10060; Reset</button>
+    </div>`;
+  });
+  bar.innerHTML = html;
+}
+
+document.getElementById('categorySubfilterBar').addEventListener('click', (e) => {
+  const pill = e.target.closest('.sub-pill');
+  if (pill) {
+    const set = subtypeSetFor(pill.dataset.cat);
+    if (set.has(pill.dataset.subvalue)) set.delete(pill.dataset.subvalue);
+    else set.add(pill.dataset.subvalue);
+    pill.classList.toggle('active', set.has(pill.dataset.subvalue));
+    renderFindIcons();
+    updateMaterialResultNote();
+    return;
+  }
+  const selectAllBtn = e.target.closest('[data-subselectall]');
+  if (selectAllBtn) {
+    const cat = selectAllBtn.dataset.subselectall;
+    const set = subtypeSetFor(cat);
+    set.clear();
+    subvaluesForCategory(cat).forEach(v => set.add(v));
+    renderCategorySubfilters();
+    renderFindIcons();
+    updateMaterialResultNote();
+    return;
+  }
+  const resetBtn = e.target.closest('[data-subreset]');
+  if (resetBtn) {
+    subtypeSetFor(resetBtn.dataset.subreset).clear();
+    renderCategorySubfilters();
+    renderFindIcons();
+    updateMaterialResultNote();
+  }
 });
 
 function updateMaterialResultNote() {
@@ -1067,7 +1159,7 @@ function updateMaterialResultNote() {
   } else if (activeScope === 'section' && selectedSections.size > 0) {
     scopeNote = ` (within selected sections)`;
   }
-  const totalActive = inScope.filter(f => activeMaterials.has(f.artifact_category)).length;
+  const totalActive = inScope.filter(f => activeMaterials.has(f.artifact_category) && matchesSubtypeFilter(f)).length;
   if (activeMaterials.size === 0) {
     note.textContent = 'No categories selected \u2014 no finds shown on the map.';
   } else if (activeMaterials.size === Object.keys(CATEGORY_STYLE).length && scopeNote === '') {
@@ -1593,6 +1685,9 @@ function lociForSquare(areaId, letter) {
 }
 
 const CHANGELOG = [
+  { version: 'v1.10.0', notes: 'New category sub-filter: selecting a category (e.g. Ossuary) reveals its actual sub-types found in the data (Open/Female/Male/Zoomorphic/Misc), each with its own Select All/Reset. Read live from the database, not a fixed table -- a brand new subtype (e.g. a new flint tool type) will appear automatically once it exists in the data, no maintenance needed.' },
+  { version: 'v1.9.6', notes: 'Map now shrink-wraps to its exact natural size (height-driven, capped at 70% max width) instead of leaving dead grey space next to it -- the sidebar flex-grows to absorb all remaining room, so the desc window is now effectively "desc + former grey area" as requested.' },
+  { version: 'v1.9.5', notes: 'Map now aligns to the left edge instead of centering -- removes the equal-margin "border" effect on both sides caused by aspect-ratio letterboxing, giving more visual room near the sidebar.' },
   { version: 'v1.9.4', notes: 'Fixed a regression from v1.9.3: the new plain-click "select just this one" logic didn\'t check whether Ctrl was held, so it fired right after Ctrl+click and immediately collapsed the multi-selection back to one item. Ctrl+click/middle-click multi-select works again.' },
   { version: 'v1.9.3', notes: 'Plain click on area/loci/square now selects (yellow glow + sub-filter pill highlight, replacing the previous single selection) instead of only previewing. Ctrl+click / middle-click remain the way to ADD to a multi-selection for comparing several at once. Now consistent across all three scopes.' },
   { version: 'v1.9.2', notes: 'Fixed a real bug: the info-modal HTML was placed after the closing script tag, so the script referencing it threw an error on load and halted everything after it (stuck loading, broken scope isolation). Plain click no longer toggles selection -- only Ctrl+click/middle-click do. Squares modal now shows which loci reference each square.' },
