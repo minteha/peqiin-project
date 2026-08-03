@@ -876,7 +876,7 @@ const svgNS = 'http://www.w3.org/2000/svg';
 //   patch -- a bug fix or small tweak (e.g. emoji placement, toggle-undo fix)
 // This batch: 3 patches since v1.6 (emoji moved to buttons, plain-click undo
 // fixed, section aggregate panel added) -> 1.7.3
-const MODEL_VERSION = 'v1.9.3';  // patch: plain click now selects (glow + sub-filter sync) instead of just previewing; Ctrl/middle-click still add to a multi-selection
+const MODEL_VERSION = 'v1.9.4';  // patch: fixed the plain-click handler running (and wiping out the multi-selection) even when Ctrl was held, since it wasn't checking e.ctrlKey
 
 // Material type -> { color, emoji } -- used for both map icons and table
 // Renamed from the old, conflated MATERIAL_STYLE: this now represents
@@ -1099,7 +1099,10 @@ document.getElementById('stage').addEventListener('click', (e) => {
       // this scope and sets it to only this one, with full glow + sub-filter sync
       // (same visual treatment as Ctrl+click, just single instead of additive).
       // Ctrl+click / middle-click ADD to the selection instead, for comparing several.
-      if (kind === 'area' || kind === 'square' || kind === 'locus') {
+      // IMPORTANT: must skip entirely when Ctrl is held, otherwise this bubble-phase
+      // handler fires right after the Ctrl+click capture-phase handler and immediately
+      // wipes out the multi-selection it just built, collapsing it back to one item.
+      if ((kind === 'area' || kind === 'square' || kind === 'locus') && !e.ctrlKey) {
         const scope = kind === 'area' ? 'area' : kind === 'square' ? 'section' : 'loci';
         const value = kind === 'area' ? areaOfElement(el) : kind === 'square' ? squareKeyOfElement(el) : locusIdFromSvgId(el.id);
         if (value) {
@@ -1111,6 +1114,10 @@ document.getElementById('stage').addEventListener('click', (e) => {
           return;
         }
       }
+      // When Ctrl IS held on one of these three kinds, the capture-phase handler
+      // above has already fully handled it -- don't fall through to selectElement
+      // here too, or it reintroduces the exact stale-panel bug fixed earlier.
+      if ((kind === 'area' || kind === 'square' || kind === 'locus') && e.ctrlKey) return;
       selectElement(el, kind);
       return;
     }
@@ -1586,6 +1593,7 @@ function lociForSquare(areaId, letter) {
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.4', notes: 'Fixed a regression from v1.9.3: the new plain-click "select just this one" logic didn\'t check whether Ctrl was held, so it fired right after Ctrl+click and immediately collapsed the multi-selection back to one item. Ctrl+click/middle-click multi-select works again.' },
   { version: 'v1.9.3', notes: 'Plain click on area/loci/square now selects (yellow glow + sub-filter pill highlight, replacing the previous single selection) instead of only previewing. Ctrl+click / middle-click remain the way to ADD to a multi-selection for comparing several at once. Now consistent across all three scopes.' },
   { version: 'v1.9.2', notes: 'Fixed a real bug: the info-modal HTML was placed after the closing script tag, so the script referencing it threw an error on load and halted everything after it (stuck loading, broken scope isolation). Plain click no longer toggles selection -- only Ctrl+click/middle-click do. Squares modal now shows which loci reference each square.' },
   { version: 'v1.9.0', notes: 'Category filter now starts empty (matching the location sub-filters) and has a Select All button. "N loci" / "N squares" / the version number are now clickable, opening a list with source citation -- and this changelog itself is the version popup.' },
